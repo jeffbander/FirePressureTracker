@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertBpReadingSchema, insertWorkflowTaskSchema, insertCommunicationLogSchema } from "@shared/schema";
+import { insertBpReadingSchema, insertWorkflowTaskSchema, insertCommunicationLogSchema, insertPatientSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication
@@ -120,7 +120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/patients/priority", async (req, res) => {
     try {
       const abnormalReadings = await storage.getAbnormalReadings();
-      const patientIds = [...new Set(abnormalReadings.map(r => r.patientId))];
+      const patientIds = Array.from(new Set(abnormalReadings.map(r => r.patientId)));
       
       const priorityPatients = await Promise.all(
         patientIds.map(async (patientId) => {
@@ -137,6 +137,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(priorityPatients.filter(p => p));
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch priority patients" });
+    }
+  });
+
+  // Create patient
+  app.post("/api/patients", async (req, res) => {
+    try {
+      const validated = insertPatientSchema.parse(req.body);
+      const patient = await storage.createPatient(validated);
+      res.status(201).json(patient);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid patient data" });
     }
   });
 

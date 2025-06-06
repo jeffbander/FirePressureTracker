@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AddPatientDialog } from "@/components/add-patient-dialog";
 
 export default function Patients() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [stationFilter, setStationFilter] = useState('all');
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   const { data: patients, isLoading } = useQuery({
     queryKey: ['/api/patients', { search, status: statusFilter, station: stationFilter }],
@@ -57,7 +59,7 @@ export default function Patients() {
         title="Patient Management" 
         subtitle="View and manage patient records and readings"
       >
-        <Button>
+        <Button onClick={() => setShowAddDialog(true)}>
           <i className="fas fa-plus mr-2"></i>
           Add Patient
         </Button>
@@ -222,6 +224,11 @@ export default function Patients() {
             )}
           </CardContent>
         </Card>
+
+        <AddPatientDialog 
+          open={showAddDialog} 
+          onOpenChange={setShowAddDialog} 
+        />
       </main>
     </div>
   );

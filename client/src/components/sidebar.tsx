@@ -35,8 +35,8 @@ export function Sidebar() {
           const isActive = location === item.href;
           return (
             <Link key={item.name} href={item.href}>
-              <a className={cn(
-                "flex items-center px-6 py-3 text-sm font-medium transition-colors",
+              <div className={cn(
+                "flex items-center px-6 py-3 text-sm font-medium transition-colors cursor-pointer",
                 isActive
                   ? "text-primary bg-blue-50 border-r-3 border-primary"
                   : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
@@ -46,7 +46,7 @@ export function Sidebar() {
                 {item.name === 'Workflow' && (
                   <span className="ml-auto bg-destructive text-white text-xs px-2 py-1 rounded-full">3</span>
                 )}
-              </a>
+              </div>
             </Link>
           );
         })}
