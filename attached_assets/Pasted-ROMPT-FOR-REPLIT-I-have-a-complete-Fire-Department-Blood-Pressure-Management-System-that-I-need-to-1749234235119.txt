@@ -1,0 +1,45 @@
+ROMPT FOR REPLIT:
+I have a complete Fire Department Blood Pressure Management System that I need to deploy. This is a full-stack healthcare application with a Flask backend API and React frontend dashboard.
+What this application does:
+Manages blood pressure monitoring for firefighters and emergency personnel
+Automatically processes BP readings and flags abnormal results
+Creates automated workflows for nurse practitioners and hypertension coaches
+Provides a dashboard showing patients needing phone calls (without duplicates)
+Tracks patient medical history, medications, and communication records
+Includes real-time charts, statistics, and reporting features
+Application Structure:
+bp_management_api/ - Flask backend API (Python)
+bp-dashboard/ - React frontend dashboard (Node.js)
+create_database.sql - PostgreSQL database schema
+Documentation and configuration files
+Deployment Requirements:
+Backend (Flask API):
+Python 3.11+ with Flask, SQLAlchemy, PostgreSQL
+Install dependencies: pip install -r requirements.txt
+Set up environment variables for database connection
+Run with: python src/main.py
+Frontend (React Dashboard):
+Node.js 18+ with React, Tailwind CSS, Recharts
+Install dependencies: npm install
+Build for production: npm run build
+Serve the built files or run dev server: npm run dev
+Database:
+PostgreSQL database required
+Import schema using the provided create_database.sql file
+Configure connection string in backend environment
+Demo Credentials:
+Admin: username admin, password admin123
+Nurse: username nurse, password nurse123
+Key Features to Test:
+Login and dashboard overview
+Patient management with abnormal readings filter
+Individual patient detail pages with BP trend charts
+Workflow task management
+Real-time statistics and alerts
+Please help me:
+Set up the proper environment for both Flask and React
+Configure the database connection
+Install all necessary dependencies
+Deploy both frontend and backend
+Provide the URLs to access the application
+This is a production-ready healthcare application with comprehensive features for blood pressure monitoring and patient care management.
