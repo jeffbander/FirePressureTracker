@@ -3,6 +3,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertPatientSchema } from "@shared/schema";
+import { z } from "zod";
+
+// Form schema that handles string inputs and transforms them appropriately
+const formSchema = insertPatientSchema.extend({
+  age: z.string().min(1, "Age is required").transform((val) => parseInt(val, 10)),
+}).refine((data) => !isNaN(data.age) && data.age > 0, {
+  message: "Age must be a valid number greater than 0",
+  path: ["age"],
+});
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -36,14 +45,14 @@ export function AddPatientDialog({ open, onOpenChange }: AddPatientDialogProps) 
   const queryClient = useQueryClient();
 
   const form = useForm({
-    resolver: zodResolver(insertPatientSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       employeeId: "",
       firstName: "",
       lastName: "",
       department: "",
       station: "",
-      age: 0,
+      age: "",
       email: "",
       phone: "",
       emergencyContact: "",
@@ -77,16 +86,8 @@ export function AddPatientDialog({ open, onOpenChange }: AddPatientDialogProps) 
   });
 
   const onSubmit = (data: any) => {
-    const processedData = {
-      ...data,
-      age: parseInt(data.age),
-      medications: data.medications || null,
-      allergies: data.allergies || null,
-      email: data.email || null,
-      phone: data.phone || null,
-      emergencyContact: data.emergencyContact || null,
-    };
-    createPatientMutation.mutate(processedData);
+    // The form schema automatically transforms the data properly
+    createPatientMutation.mutate(data);
   };
 
   return (
