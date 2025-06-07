@@ -92,6 +92,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Priority patients (those requiring follow-up) - must come before parameterized route
+  app.get("/api/patients/priority", async (req, res) => {
+    try {
+      const abnormalReadings = await storage.getAbnormalReadings();
+      const patientIds = Array.from(new Set(abnormalReadings.map(r => r.patientId)));
+      
+      const priorityPatients = await Promise.all(
+        patientIds.map(async (patientId) => {
+          const patient = await storage.getPatient(patientId);
+          const readings = await storage.getBpReadingsByPatient(patientId);
+          const latestReading = readings[0];
+          return {
+            ...patient,
+            latestReading,
+          };
+        })
+      );
+
+      res.json(priorityPatients.filter(p => p));
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch priority patients" });
+    }
+  });
+
   app.get("/api/patients/:id", async (req, res) => {
     try {
       const patientId = parseInt(req.params.id);
@@ -113,30 +137,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch patient details" });
-    }
-  });
-
-  // Priority patients (those requiring follow-up)
-  app.get("/api/patients/priority", async (req, res) => {
-    try {
-      const abnormalReadings = await storage.getAbnormalReadings();
-      const patientIds = Array.from(new Set(abnormalReadings.map(r => r.patientId)));
-      
-      const priorityPatients = await Promise.all(
-        patientIds.map(async (patientId) => {
-          const patient = await storage.getPatient(patientId);
-          const readings = await storage.getBpReadingsByPatient(patientId);
-          const latestReading = readings[0];
-          return {
-            ...patient,
-            latestReading,
-          };
-        })
-      );
-
-      res.json(priorityPatients.filter(p => p));
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch priority patients" });
     }
   });
 
