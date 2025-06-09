@@ -106,7 +106,7 @@ export class MemStorage implements IStorage {
         firstName: 'John',
         lastName: 'Rodriguez',
         department: 'Engine Company',
-        station: 'Station 15',
+        union: 'Union 15',
         age: 42,
         email: 'j.rodriguez@firestation.gov',
         phone: '(555) 123-4567',
@@ -122,7 +122,7 @@ export class MemStorage implements IStorage {
         firstName: 'Sarah',
         lastName: 'Chen',
         department: 'Ladder Company',
-        station: 'Station 7',
+        union: 'Union 7',
         age: 35,
         email: 's.chen@firestation.gov',
         phone: '(555) 234-5678',
@@ -138,7 +138,7 @@ export class MemStorage implements IStorage {
         firstName: 'Mike',
         lastName: 'Thompson',
         department: 'Rescue Squad',
-        station: 'Station 3',
+        union: 'Union 3',
         age: 38,
         email: 'm.thompson@firestation.gov',
         phone: '(555) 345-6789',
@@ -154,7 +154,7 @@ export class MemStorage implements IStorage {
         firstName: 'Lisa',
         lastName: 'Garcia',
         department: 'Paramedic Unit',
-        station: 'Station 1',
+        union: 'Union 1',
         age: 29,
         email: 'l.garcia@firestation.gov',
         phone: '(555) 456-7890',
@@ -310,7 +310,7 @@ export class MemStorage implements IStorage {
       patient.lastName.toLowerCase().includes(lowerQuery) ||
       patient.employeeId.toLowerCase().includes(lowerQuery) ||
       patient.department.toLowerCase().includes(lowerQuery) ||
-      patient.station.toLowerCase().includes(lowerQuery)
+      patient.union.toLowerCase().includes(lowerQuery)
     );
   }
 
@@ -318,6 +318,12 @@ export class MemStorage implements IStorage {
     const patient: Patient = {
       ...insertPatient,
       id: this.currentId++,
+      email: insertPatient.email || null,
+      phone: insertPatient.phone || null,
+      emergencyContact: insertPatient.emergencyContact || null,
+      medications: insertPatient.medications || null,
+      allergies: insertPatient.allergies || null,
+      lastCheckup: insertPatient.lastCheckup || null,
       createdAt: new Date(),
     };
     this.patients.set(patient.id, patient);

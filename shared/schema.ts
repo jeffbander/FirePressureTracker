@@ -19,7 +19,7 @@ export const patients = pgTable("patients", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   department: text("department").notNull(),
-  station: text("station").notNull(),
+  union: text("union").notNull(),
   age: integer("age").notNull(),
   email: text("email"),
   phone: text("phone"),
