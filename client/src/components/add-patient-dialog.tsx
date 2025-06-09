@@ -51,7 +51,7 @@ export function AddPatientDialog({ open, onOpenChange }: AddPatientDialogProps) 
       firstName: "",
       lastName: "",
       department: "",
-      station: "",
+      union: "",
       age: "",
       email: "",
       phone: "",
@@ -175,24 +175,24 @@ export function AddPatientDialog({ open, onOpenChange }: AddPatientDialogProps) 
 
               <FormField
                 control={form.control}
-                name="station"
+                name="union"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Station</FormLabel>
+                    <FormLabel>Union</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select station" />
+                          <SelectValue placeholder="Select union" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Station 1">Station 1</SelectItem>
-                        <SelectItem value="Station 2">Station 2</SelectItem>
-                        <SelectItem value="Station 3">Station 3</SelectItem>
-                        <SelectItem value="Station 4">Station 4</SelectItem>
-                        <SelectItem value="Station 5">Station 5</SelectItem>
-                        <SelectItem value="Station 7">Station 7</SelectItem>
-                        <SelectItem value="Station 15">Station 15</SelectItem>
+                        <SelectItem value="Union 1">Union 1</SelectItem>
+                        <SelectItem value="Union 2">Union 2</SelectItem>
+                        <SelectItem value="Union 3">Union 3</SelectItem>
+                        <SelectItem value="Union 4">Union 4</SelectItem>
+                        <SelectItem value="Union 5">Union 5</SelectItem>
+                        <SelectItem value="Union 7">Union 7</SelectItem>
+                        <SelectItem value="Union 15">Union 15</SelectItem>
                         <SelectItem value="Headquarters">Headquarters</SelectItem>
                       </SelectContent>
                     </Select>

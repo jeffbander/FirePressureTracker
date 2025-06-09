@@ -170,11 +170,48 @@ export class MemStorage implements IStorage {
       this.patients.set(patient.id, patient);
     });
 
-    // Create demo BP readings
+    // Create comprehensive BP readings for trend analysis
     const readings = [
+      // John Rodriguez (FF-001) - Stage 2 hypertension trending
       {
         id: this.currentId++,
-        patientId: 4, // John Rodriguez
+        patientId: 4,
+        systolic: 165,
+        diastolic: 98,
+        heartRate: 78,
+        notes: 'Initial assessment',
+        recordedBy: 2,
+        recordedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 2 weeks ago
+        isAbnormal: true,
+        category: 'stage1',
+      },
+      {
+        id: this.currentId++,
+        patientId: 4,
+        systolic: 172,
+        diastolic: 105,
+        heartRate: 82,
+        notes: 'Stress from major fire incident',
+        recordedBy: 2,
+        recordedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
+        isAbnormal: true,
+        category: 'stage2',
+      },
+      {
+        id: this.currentId++,
+        patientId: 4,
+        systolic: 175,
+        diastolic: 108,
+        heartRate: 85,
+        notes: 'Medication adjustment needed',
+        recordedBy: 2,
+        recordedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
+        isAbnormal: true,
+        category: 'stage2',
+      },
+      {
+        id: this.currentId++,
+        patientId: 4,
         systolic: 180,
         diastolic: 110,
         heartRate: 88,
@@ -184,9 +221,47 @@ export class MemStorage implements IStorage {
         isAbnormal: true,
         category: 'stage2',
       },
+
+      // Sarah Chen (FF-032) - Stage 1 hypertension with improving trend
       {
         id: this.currentId++,
-        patientId: 5, // Sarah Chen
+        patientId: 5,
+        systolic: 155,
+        diastolic: 100,
+        heartRate: 80,
+        notes: 'Started new medication regimen',
+        recordedBy: 2,
+        recordedAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000), // 3 weeks ago
+        isAbnormal: true,
+        category: 'stage1',
+      },
+      {
+        id: this.currentId++,
+        patientId: 5,
+        systolic: 152,
+        diastolic: 98,
+        heartRate: 78,
+        notes: 'Medication compliance good',
+        recordedBy: 2,
+        recordedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 2 weeks ago
+        isAbnormal: true,
+        category: 'stage1',
+      },
+      {
+        id: this.currentId++,
+        patientId: 5,
+        systolic: 148,
+        diastolic: 96,
+        heartRate: 75,
+        notes: 'Showing improvement',
+        recordedBy: 2,
+        recordedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
+        isAbnormal: true,
+        category: 'stage1',
+      },
+      {
+        id: this.currentId++,
+        patientId: 5,
         systolic: 150,
         diastolic: 95,
         heartRate: 76,
@@ -196,9 +271,47 @@ export class MemStorage implements IStorage {
         isAbnormal: true,
         category: 'stage1',
       },
+
+      // Mike Thompson (FF-018) - Hypotension episodes
       {
         id: this.currentId++,
-        patientId: 6, // Mike Thompson
+        patientId: 6,
+        systolic: 110,
+        diastolic: 70,
+        heartRate: 65,
+        notes: 'Normal baseline reading',
+        recordedBy: 2,
+        recordedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 1 month ago
+        isAbnormal: false,
+        category: 'normal',
+      },
+      {
+        id: this.currentId++,
+        patientId: 6,
+        systolic: 95,
+        diastolic: 62,
+        heartRate: 58,
+        notes: 'Post-rescue operation fatigue',
+        recordedBy: 2,
+        recordedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 2 weeks ago
+        isAbnormal: true,
+        category: 'low',
+      },
+      {
+        id: this.currentId++,
+        patientId: 6,
+        systolic: 88,
+        diastolic: 58,
+        heartRate: 60,
+        notes: 'Dehydration after long shift',
+        recordedBy: 2,
+        recordedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
+        isAbnormal: true,
+        category: 'low',
+      },
+      {
+        id: this.currentId++,
+        patientId: 6,
         systolic: 85,
         diastolic: 55,
         heartRate: 62,
@@ -208,9 +321,47 @@ export class MemStorage implements IStorage {
         isAbnormal: true,
         category: 'low',
       },
+
+      // Lisa Garcia (FF-045) - Consistently normal readings
       {
         id: this.currentId++,
-        patientId: 7, // Lisa Garcia
+        patientId: 7,
+        systolic: 118,
+        diastolic: 75,
+        heartRate: 68,
+        notes: 'Pre-shift baseline',
+        recordedBy: 2,
+        recordedAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000), // 3 weeks ago
+        isAbnormal: false,
+        category: 'normal',
+      },
+      {
+        id: this.currentId++,
+        patientId: 7,
+        systolic: 122,
+        diastolic: 78,
+        heartRate: 72,
+        notes: 'Post-training assessment',
+        recordedBy: 2,
+        recordedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 2 weeks ago
+        isAbnormal: false,
+        category: 'normal',
+      },
+      {
+        id: this.currentId++,
+        patientId: 7,
+        systolic: 120,
+        diastolic: 76,
+        heartRate: 69,
+        notes: 'Routine monthly check',
+        recordedBy: 2,
+        recordedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
+        isAbnormal: false,
+        category: 'normal',
+      },
+      {
+        id: this.currentId++,
+        patientId: 7,
         systolic: 125,
         diastolic: 80,
         heartRate: 70,

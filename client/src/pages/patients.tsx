@@ -12,11 +12,11 @@ import { AddPatientDialog } from "@/components/add-patient-dialog";
 export default function Patients() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [stationFilter, setStationFilter] = useState('all');
+  const [unionFilter, setUnionFilter] = useState('all');
   const [showAddDialog, setShowAddDialog] = useState(false);
 
   const { data: patients, isLoading } = useQuery({
-    queryKey: ['/api/patients', { search, status: statusFilter, station: stationFilter }],
+    queryKey: ['/api/patients', { search, status: statusFilter, union: unionFilter }],
   });
 
   const getStatusColor = (category: string) => {
@@ -100,16 +100,16 @@ export default function Patients() {
                     <SelectItem value="low">Low BP</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select value={stationFilter} onValueChange={setStationFilter}>
+                <Select value={unionFilter} onValueChange={setUnionFilter}>
                   <SelectTrigger className="w-full sm:w-48">
-                    <SelectValue placeholder="All Stations" />
+                    <SelectValue placeholder="All Unions" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Stations</SelectItem>
-                    <SelectItem value="Station 1">Station 1</SelectItem>
-                    <SelectItem value="Station 3">Station 3</SelectItem>
-                    <SelectItem value="Station 7">Station 7</SelectItem>
-                    <SelectItem value="Station 15">Station 15</SelectItem>
+                    <SelectItem value="all">All Unions</SelectItem>
+                    <SelectItem value="Union 1">Union 1</SelectItem>
+                    <SelectItem value="Union 3">Union 3</SelectItem>
+                    <SelectItem value="Union 7">Union 7</SelectItem>
+                    <SelectItem value="Union 15">Union 15</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -150,7 +150,7 @@ export default function Patients() {
                     <TableHead>Patient</TableHead>
                     <TableHead>Latest Reading</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Station</TableHead>
+                    <TableHead>Union</TableHead>
                     <TableHead>Last Contact</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -197,7 +197,7 @@ export default function Patients() {
                         </span>
                       </TableCell>
                       <TableCell className="text-sm text-gray-600">
-                        {patient.station}
+                        {patient.union}
                       </TableCell>
                       <TableCell className="text-sm text-gray-600">
                         {patient.lastCheckup 
