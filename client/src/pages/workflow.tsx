@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,10 +9,42 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function Workflow() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['/api/workflow', { status: statusFilter, priority: priorityFilter }],
   });
+
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({ taskId, status }: { taskId: number; status: string }) => {
+      const response = await apiRequest("PATCH", `/api/workflow/${taskId}`, { status });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/workflow"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      toast({
+        title: "Task updated successfully",
+        description: "The task status has been updated.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update task. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleStartTask = (taskId: number) => {
+    updateTaskMutation.mutate({ taskId, status: 'in_progress' });
+  };
+
+  const handleCompleteTask = (taskId: number) => {
+    updateTaskMutation.mutate({ taskId, status: 'completed' });
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -176,8 +210,12 @@ export default function Workflow() {
                     </div>
                     <div className="flex items-center space-x-2 ml-4">
                       {task.status !== 'completed' && (
-                        <Button size="sm">
-                          {task.status === 'pending' ? 'Start Task' : 'Continue'}
+                        <Button 
+                          size="sm" 
+                          onClick={() => task.status === 'pending' ? handleStartTask(task.id) : handleCompleteTask(task.id)}
+                          disabled={updateTaskMutation.isPending}
+                        >
+                          {task.status === 'pending' ? 'Start Task' : 'Mark Complete'}
                         </Button>
                       )}
                       <Button size="sm" variant="outline">
