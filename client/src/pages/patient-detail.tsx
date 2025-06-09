@@ -171,7 +171,7 @@ export default function PatientDetail() {
                     {patient.firstName} {patient.lastName}
                   </h1>
                   <p className="text-gray-600">
-                    {patient.department} • {patient.station} • ID: {patient.employeeId}
+                    {patient.department} • {patient.union} • ID: {patient.employeeId}
                   </p>
                   <div className="flex items-center space-x-4 mt-2">
                     {latestReading && (

@@ -5,8 +5,8 @@ import { useAuthStore } from "@/lib/auth";
 const navigation = [
   { name: 'Dashboard', href: '/', icon: 'fas fa-chart-pie' },
   { name: 'Patients', href: '/patients', icon: 'fas fa-users' },
+  { name: 'BP Trends', href: '/bp-trends', icon: 'fas fa-chart-line' },
   { name: 'Workflow', href: '/workflow', icon: 'fas fa-tasks' },
-  { name: 'Reports', href: '/reports', icon: 'fas fa-chart-bar' },
 ];
 
 export function Sidebar() {

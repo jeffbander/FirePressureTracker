@@ -10,6 +10,7 @@ import Dashboard from "@/pages/dashboard";
 import Patients from "@/pages/patients";
 import PatientDetail from "@/pages/patient-detail";
 import Workflow from "@/pages/workflow";
+import BPTrends from "@/pages/bp-trends";
 import NotFound from "@/pages/not-found";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -40,6 +41,7 @@ function Router() {
       <Route path="/patients" component={Patients} />
       <Route path="/patients/:id" component={PatientDetail} />
       <Route path="/workflow" component={Workflow} />
+      <Route path="/bp-trends" component={BPTrends} />
       <Route component={NotFound} />
     </Switch>
   );
