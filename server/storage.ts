@@ -444,6 +444,8 @@ export class MemStorage implements IStorage {
     const user: User = {
       ...insertUser,
       id: this.currentId++,
+      email: insertUser.email ?? null,
+      phone: insertUser.phone ?? null,
       createdAt: new Date(),
     };
     this.users.set(user.id, user);
@@ -478,12 +480,14 @@ export class MemStorage implements IStorage {
     const patient: Patient = {
       ...insertPatient,
       id: this.currentId++,
-      email: insertPatient.email || null,
-      phone: insertPatient.phone || null,
-      emergencyContact: insertPatient.emergencyContact || null,
-      medications: insertPatient.medications || null,
-      allergies: insertPatient.allergies || null,
-      lastCheckup: insertPatient.lastCheckup || null,
+      email: insertPatient.email ?? null,
+      phone: insertPatient.phone ?? null,
+      emergencyContact: insertPatient.emergencyContact ?? null,
+      medications: insertPatient.medications ?? null,
+      allergies: insertPatient.allergies ?? null,
+      lastCheckup: insertPatient.lastCheckup ?? null,
+      customSystolicThreshold: insertPatient.customSystolicThreshold ?? null,
+      customDiastolicThreshold: insertPatient.customDiastolicThreshold ?? null,
       createdAt: new Date(),
     };
     this.patients.set(patient.id, patient);
@@ -590,6 +594,9 @@ export class MemStorage implements IStorage {
     const task: WorkflowTask = {
       ...insertTask,
       id: this.currentId++,
+      status: insertTask.status ?? 'pending',
+      description: insertTask.description ?? null,
+      dueDate: insertTask.dueDate ?? null,
       createdAt: new Date(),
       completedAt: null,
     };
