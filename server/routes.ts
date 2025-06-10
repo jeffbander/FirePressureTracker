@@ -333,14 +333,251 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all communication logs with filtering and search
+  app.get("/api/communications", async (req, res) => {
+    try {
+      const { 
+        patientId, 
+        userId, 
+        type, 
+        outcome, 
+        dateFrom, 
+        dateTo,
+        search,
+        sortBy = 'createdAt',
+        sortOrder = 'desc'
+      } = req.query;
+
+      // Get all patients to fetch their communication logs
+      const patients = await storage.getAllPatients();
+      let allCommunications: any[] = [];
+
+      for (const patient of patients) {
+        const communications = await storage.getCommunicationLogByPatient(patient.id);
+        const enhancedComms = communications.map(comm => ({
+          ...comm,
+          patient: {
+            id: patient.id,
+            firstName: patient.firstName,
+            lastName: patient.lastName,
+            employeeId: patient.employeeId,
+            department: patient.department,
+            phone: patient.phone,
+            email: patient.email
+          }
+        }));
+        allCommunications = [...allCommunications, ...enhancedComms];
+      }
+
+      // Add user information
+      const communicationsWithUsers = await Promise.all(
+        allCommunications.map(async (comm) => {
+          const user = await storage.getUser(comm.userId);
+          return {
+            ...comm,
+            user: user ? {
+              id: user.id,
+              name: user.name,
+              role: user.role,
+              email: user.email
+            } : null
+          };
+        })
+      );
+
+      // Apply filters
+      let filteredComms = communicationsWithUsers;
+
+      if (patientId) {
+        filteredComms = filteredComms.filter(comm => comm.patientId === parseInt(patientId as string));
+      }
+
+      if (userId) {
+        filteredComms = filteredComms.filter(comm => comm.userId === parseInt(userId as string));
+      }
+
+      if (type) {
+        filteredComms = filteredComms.filter(comm => comm.type === type);
+      }
+
+      if (outcome) {
+        filteredComms = filteredComms.filter(comm => comm.outcome === outcome);
+      }
+
+      if (dateFrom) {
+        const fromDate = new Date(dateFrom as string);
+        filteredComms = filteredComms.filter(comm => new Date(comm.createdAt!) >= fromDate);
+      }
+
+      if (dateTo) {
+        const toDate = new Date(dateTo as string);
+        filteredComms = filteredComms.filter(comm => new Date(comm.createdAt!) <= toDate);
+      }
+
+      if (search) {
+        const searchTerm = (search as string).toLowerCase();
+        filteredComms = filteredComms.filter(comm => 
+          comm.message.toLowerCase().includes(searchTerm) ||
+          (comm.notes && comm.notes.toLowerCase().includes(searchTerm)) ||
+          `${comm.patient.firstName} ${comm.patient.lastName}`.toLowerCase().includes(searchTerm) ||
+          comm.patient.employeeId.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      // Apply sorting
+      filteredComms.sort((a, b) => {
+        let aVal = a[sortBy as string];
+        let bVal = b[sortBy as string];
+        
+        if (sortBy === 'patientName') {
+          aVal = `${a.patient.firstName} ${a.patient.lastName}`;
+          bVal = `${b.patient.firstName} ${b.patient.lastName}`;
+        }
+        
+        if (sortBy === 'userName') {
+          aVal = a.user?.name || '';
+          bVal = b.user?.name || '';
+        }
+
+        if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+
+      res.json(filteredComms);
+    } catch (error) {
+      console.error('Error fetching communications:', error);
+      res.status(500).json({ message: "Failed to fetch communication logs" });
+    }
+  });
+
+  // Get communication analytics
+  app.get("/api/communications/analytics", async (req, res) => {
+    try {
+      const { period = '30d' } = req.query;
+      
+      // Get all communications
+      const patients = await storage.getAllPatients();
+      let allCommunications: any[] = [];
+
+      for (const patient of patients) {
+        const communications = await storage.getCommunicationLogByPatient(patient.id);
+        allCommunications = [...allCommunications, ...communications];
+      }
+
+      // Filter by period
+      const now = new Date();
+      const cutoffDate = new Date();
+      
+      switch (period) {
+        case '7d':
+          cutoffDate.setDate(now.getDate() - 7);
+          break;
+        case '30d':
+          cutoffDate.setDate(now.getDate() - 30);
+          break;
+        case '90d':
+          cutoffDate.setDate(now.getDate() - 90);
+          break;
+        case '1y':
+          cutoffDate.setFullYear(now.getFullYear() - 1);
+          break;
+        default:
+          cutoffDate.setDate(now.getDate() - 30);
+      }
+
+      const filteredComms = allCommunications.filter(comm => 
+        new Date(comm.createdAt!) >= cutoffDate
+      );
+
+      // Calculate analytics
+      const analytics = {
+        totalCommunications: filteredComms.length,
+        byType: {} as Record<string, number>,
+        byOutcome: {} as Record<string, number>,
+        byDay: {} as Record<string, number>,
+        responseRate: 0,
+        topStaff: {} as Record<string, number>,
+        dailyTrend: [] as any[]
+      };
+
+      // Group by type
+      filteredComms.forEach(comm => {
+        analytics.byType[comm.type] = (analytics.byType[comm.type] || 0) + 1;
+      });
+
+      // Group by outcome
+      filteredComms.forEach(comm => {
+        if (comm.outcome) {
+          analytics.byOutcome[comm.outcome] = (analytics.byOutcome[comm.outcome] || 0) + 1;
+        }
+      });
+
+      // Group by day for trend analysis
+      filteredComms.forEach(comm => {
+        const date = new Date(comm.createdAt!).toISOString().split('T')[0];
+        analytics.byDay[date] = (analytics.byDay[date] || 0) + 1;
+      });
+
+      // Create daily trend data
+      const sortedDays = Object.keys(analytics.byDay).sort();
+      analytics.dailyTrend = sortedDays.map(date => ({
+        date,
+        count: analytics.byDay[date]
+      }));
+
+      // Calculate response rate (calls that weren't "no_answer")
+      const calls = filteredComms.filter(comm => comm.type === 'call');
+      const answeredCalls = calls.filter(comm => comm.outcome && comm.outcome !== 'no_answer');
+      analytics.responseRate = calls.length > 0 ? Math.round((answeredCalls.length / calls.length) * 100) : 0;
+
+      // Group by staff
+      for (const comm of filteredComms) {
+        const user = await storage.getUser(comm.userId);
+        if (user) {
+          analytics.topStaff[user.name] = (analytics.topStaff[user.name] || 0) + 1;
+        }
+      }
+
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error calculating analytics:', error);
+      res.status(500).json({ message: "Failed to calculate analytics" });
+    }
+  });
+
   // Communication logs
-  app.post("/api/communication", async (req, res) => {
+  app.post("/api/communications", async (req, res) => {
     try {
       const validated = insertCommunicationLogSchema.parse(req.body);
       const log = await storage.createCommunicationLog(validated);
-      res.status(201).json(log);
+      
+      // Get enhanced data for response
+      const patient = await storage.getPatient(log.patientId);
+      const user = await storage.getUser(log.userId);
+      
+      const enhancedLog = {
+        ...log,
+        patient: patient ? {
+          id: patient.id,
+          firstName: patient.firstName,
+          lastName: patient.lastName,
+          employeeId: patient.employeeId
+        } : null,
+        user: user ? {
+          id: user.id,
+          name: user.name,
+          role: user.role
+        } : null
+      };
+
+      res.status(201).json(enhancedLog);
     } catch (error) {
-      res.status(400).json({ message: "Invalid communication log data" });
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid communication data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create communication log" });
+      }
     }
   });
 

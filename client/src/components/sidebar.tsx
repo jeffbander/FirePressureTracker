@@ -7,6 +7,7 @@ const navigation = [
   { name: 'Patients', href: '/patients', icon: 'fas fa-users' },
   { name: 'BP Trends', href: '/bp-trends', icon: 'fas fa-chart-line' },
   { name: 'Workflow', href: '/workflow', icon: 'fas fa-tasks' },
+  { name: 'Communications', href: '/communications', icon: 'fas fa-phone' },
 ];
 
 export function Sidebar() {
