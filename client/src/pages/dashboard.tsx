@@ -1,15 +1,39 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { StatsCards } from "@/components/stats-cards";
 import { PriorityPatients } from "@/components/priority-patients";
 import { BPChart } from "@/components/bp-chart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AddReadingDialog } from "@/components/add-reading-dialog";
 
 export default function Dashboard() {
+  const [showAddReadingDialog, setShowAddReadingDialog] = useState(false);
+  const [location, setLocation] = useLocation();
   const { data: recentActivity } = useQuery({
     queryKey: ['/api/readings/recent', { limit: 5 }],
   });
+
+  const handleCardClick = (cardType: string) => {
+    switch (cardType) {
+      case 'patients':
+        setLocation('/patients');
+        break;
+      case 'abnormal':
+        setLocation('/patients?filter=abnormal');
+        break;
+      case 'calls':
+        setLocation('/workflow?filter=pending');
+        break;
+      case 'weekly':
+        setLocation('/bp-trends?period=week');
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <div className="flex-1 ml-64">
@@ -25,7 +49,7 @@ export default function Dashboard() {
           />
           <i className="fas fa-search absolute right-3 top-3 text-gray-400"></i>
         </div>
-        <Button>
+        <Button onClick={() => setShowAddReadingDialog(true)}>
           <i className="fas fa-plus mr-2"></i>
           Add Reading
         </Button>
@@ -38,7 +62,7 @@ export default function Dashboard() {
       </Header>
 
       <main className="p-8">
-        <StatsCards />
+        <StatsCards onCardClick={handleCardClick} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <PriorityPatients />

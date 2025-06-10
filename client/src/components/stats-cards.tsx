@@ -1,6 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 
-export function StatsCards() {
+interface StatsCardsProps {
+  onCardClick?: (cardType: string) => void;
+}
+
+export function StatsCards({ onCardClick }: StatsCardsProps) {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['/api/dashboard/stats'],
   });
@@ -26,6 +31,7 @@ export function StatsCards() {
       change: "+12% from last month",
       icon: "fas fa-users",
       color: "blue",
+      type: "patients",
     },
     {
       title: "Abnormal Readings",
@@ -33,6 +39,7 @@ export function StatsCards() {
       change: "Requires follow-up",
       icon: "fas fa-heartbeat",
       color: "red",
+      type: "abnormal",
     },
     {
       title: "Pending Calls",
@@ -40,6 +47,7 @@ export function StatsCards() {
       change: "Need contact today",
       icon: "fas fa-phone",
       color: "orange",
+      type: "calls",
     },
     {
       title: "This Week",
@@ -47,13 +55,18 @@ export function StatsCards() {
       change: "New readings",
       icon: "fas fa-chart-line",
       color: "green",
+      type: "weekly",
     },
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {cards.map((card, index) => (
-        <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div 
+          key={index} 
+          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => onCardClick?.(card.type)}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">{card.title}</p>
