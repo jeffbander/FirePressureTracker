@@ -64,6 +64,9 @@ export const communicationLog = pgTable("communication_log", {
   userId: integer("user_id").notNull(),
   type: text("type").notNull(), // 'call', 'email', 'note'
   message: text("message").notNull(),
+  notes: text("notes"), // Additional call notes for hypertension workflow
+  outcome: text("outcome"), // 'resolved', 'unresolved', 'escalated', 'no_answer'
+  followUpDate: timestamp("follow_up_date"), // When next contact should occur
   createdAt: timestamp("created_at").defaultNow(),
 });
 

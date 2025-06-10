@@ -7,6 +7,7 @@ import {
   type CommunicationLog, type InsertCommunicationLog
 } from "@shared/schema";
 import { categorizeBP } from "@shared/bp-utils";
+import { triageHypertensionCase, getWorkflowTaskTitle, getWorkflowTaskDescription } from "@shared/hypertension-workflow";
 
 export interface IStorage {
   // User operations
@@ -440,6 +441,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(user => user.username === username);
   }
 
+  async findUserByRole(role: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.role === role);
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const user: User = {
       ...insertUser,
@@ -550,18 +555,36 @@ export class MemStorage implements IStorage {
       category: bpCategory.code,
     };
     
-    // Auto-create workflow task for abnormal readings
-    if (bpCategory.isAbnormal) {
-      const priority = bpCategory.priority >= 4 ? 'high' : bpCategory.priority >= 3 ? 'medium' : 'low';
-      await this.createWorkflowTask({
-        patientId: reading.patientId,
-        assignedTo: reading.recordedBy,
-        title: `Follow-up for ${bpCategory.name} reading`,
-        description: `Patient ${patient?.firstName} ${patient?.lastName} recorded ${systolic}/${diastolic} mmHg`,
-        priority,
-        status: 'pending',
-        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Due in 24 hours
-      });
+    // Implement hypertension outreach workflow
+    if (systolic >= 140 || diastolic >= 90) {
+      // Get patient's contact history
+      const communications = await this.getCommunicationLogByPatient(patientId);
+      const lastContact = communications.length > 0 ? communications[0] : undefined;
+      
+      const contactHistory = lastContact ? {
+        lastContactDate: lastContact.createdAt ? new Date(lastContact.createdAt) : undefined,
+        lastCallNotes: lastContact.notes || undefined,
+        followUpRecommended: lastContact.followUpDate ? new Date(lastContact.followUpDate) : undefined,
+        unresolved: lastContact.outcome === 'unresolved'
+      } : undefined;
+      
+      // Run hypertension triage
+      const triageResult = triageHypertensionCase(systolic, diastolic, contactHistory);
+      
+      if (triageResult.action !== 'no_action') {
+        // Find appropriate assignee based on role
+        const assignee = await this.findUserByRole(triageResult.assigneeRole || 'nurse');
+        
+        await this.createWorkflowTask({
+          patientId: reading.patientId,
+          assignedTo: assignee?.id || reading.recordedBy,
+          title: getWorkflowTaskTitle(triageResult, `${patient?.firstName} ${patient?.lastName}`),
+          description: getWorkflowTaskDescription(triageResult, `${patient?.firstName} ${patient?.lastName}`, systolic, diastolic),
+          priority: triageResult.priority,
+          status: 'pending',
+          dueDate: triageResult.dueDate,
+        });
+      }
     }
     
     this.bpReadings.set(reading.id, reading);
@@ -628,6 +651,9 @@ export class MemStorage implements IStorage {
     const log: CommunicationLog = {
       ...insertLog,
       id: this.currentId++,
+      notes: insertLog.notes ?? null,
+      outcome: insertLog.outcome ?? null,
+      followUpDate: insertLog.followUpDate ?? null,
       createdAt: new Date(),
     };
     this.communicationLogs.set(log.id, log);
