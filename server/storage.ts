@@ -538,6 +538,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(user => user.username === username);
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
   async findUserByRole(role: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(user => user.role === role);
   }
