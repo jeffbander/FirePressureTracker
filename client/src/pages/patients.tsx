@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AddPatientDialog } from "@/components/add-patient-dialog";
+import { IndividualBPChart } from "@/components/individual-bp-chart";
 
 export default function Patients() {
   const [search, setSearch] = useState('');
@@ -117,113 +118,93 @@ export default function Patients() {
           </CardContent>
         </Card>
 
-        {/* Patients Table */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Patient Records</CardTitle>
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-600">
-                  Showing {patients?.length || 0} patients
-                </span>
-              </div>
+        {/* Patient Cards with BP Trends */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Patient Records</h2>
+            <span className="text-sm text-gray-600">
+              Showing {patients?.length || 0} patients
+            </span>
+          </div>
+          
+          {isLoading ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardContent className="p-6">
+                    <div className="h-64 bg-gray-200 rounded"></div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-4">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="flex items-center space-x-4 p-4 animate-pulse">
-                    <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                    <div className="flex-1">
-                      <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-1/6"></div>
-                    </div>
-                    <div className="h-6 bg-gray-200 rounded w-16"></div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Patient</TableHead>
-                    <TableHead>Latest Reading</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Union</TableHead>
-                    <TableHead>Last Contact</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {patients?.map((patient: any) => (
-                    <TableRow key={patient.id} className="hover:bg-gray-50">
-                      <TableCell>
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-primary bg-opacity-10 rounded-full flex items-center justify-center">
-                            <span className="text-primary font-medium text-sm">
-                              {patient.firstName?.[0]}{patient.lastName?.[0]}
-                            </span>
-                          </div>
-                          <div>
-                            <div className="font-medium">
-                              {patient.firstName} {patient.lastName}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              ID: {patient.employeeId}
-                            </div>
-                          </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {patients?.map((patient: any) => (
+                <Card key={patient.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-primary bg-opacity-10 rounded-full flex items-center justify-center">
+                          <span className="text-primary font-bold text-lg">
+                            {patient.firstName?.[0]}{patient.lastName?.[0]}
+                          </span>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {patient.latestReading ? (
-                          <div>
-                            <div className="font-medium">
-                              {patient.latestReading.systolic}/{patient.latestReading.diastolic}
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              {new Date(patient.latestReading.recordedAt).toLocaleDateString()}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">No readings</span>
+                        <div>
+                          <h3 className="font-semibold text-lg">
+                            {patient.firstName} {patient.lastName}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {patient.union} • ID: {patient.employeeId}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        {patient.latestReading && (
+                          <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                            getStatusColor(patient.latestReading.category)
+                          }`}>
+                            {getStatusLabel(patient.latestReading.category)}
+                          </span>
                         )}
-                      </TableCell>
-                      <TableCell>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          getStatusColor(patient.latestReading?.category || '')
-                        }`}>
-                          {getStatusLabel(patient.latestReading?.category || '')}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-600">
-                        {patient.union}
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-600">
-                        {patient.lastCheckup 
-                          ? new Date(patient.lastCheckup).toLocaleDateString()
-                          : 'Never'
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pb-4">
+                    <IndividualBPChart
+                      patientName={`${patient.firstName} ${patient.lastName}`}
+                      readings={patient.readings || []}
+                      height="h-48"
+                    />
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="text-sm text-gray-600">
+                        {patient.latestReading ? (
+                          <span>
+                            Latest: <span className="font-mono font-semibold">
+                              {patient.latestReading.systolic}/{patient.latestReading.diastolic}
+                            </span> on {new Date(patient.latestReading.recordedAt).toLocaleDateString()}
+                          </span>
+                        ) : (
+                          <span>No recent readings</span>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Link href={`/patients/${patient.id}`}>
                           <Button size="sm" variant="outline">
-                            Call
+                            <i className="fas fa-eye mr-1"></i>
+                            View Details
                           </Button>
-                          <Link href={`/patients/${patient.id}`}>
-                            <Button size="sm" variant="ghost">
-                              View
-                            </Button>
-                          </Link>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                        </Link>
+                        <Button size="sm" variant="outline">
+                          <i className="fas fa-phone"></i>
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
 
         <AddPatientDialog 
           open={showAddDialog} 

@@ -8,7 +8,7 @@ import { Sidebar } from "@/components/sidebar";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Patients from "@/pages/patients";
-import PatientDetail from "@/pages/patient-detail";
+import PatientDetail from "@/pages/patient-detail-new";
 import Workflow from "@/pages/workflow";
 import BPTrends from "@/pages/bp-trends";
 import NotFound from "@/pages/not-found";
