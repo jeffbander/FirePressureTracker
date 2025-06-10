@@ -115,6 +115,8 @@ export class MemStorage implements IStorage {
         medications: JSON.stringify(['Lisinopril 10mg daily', 'Amlodipine 5mg daily']),
         allergies: 'Penicillin',
         lastCheckup: new Date('2024-10-15'),
+        customSystolicThreshold: 140,
+        customDiastolicThreshold: 90,
         createdAt: new Date(),
       },
       {
@@ -131,6 +133,8 @@ export class MemStorage implements IStorage {
         medications: JSON.stringify(['Metoprolol 25mg twice daily']),
         allergies: 'None known',
         lastCheckup: new Date('2024-11-01'),
+        customSystolicThreshold: 130,
+        customDiastolicThreshold: 85,
         createdAt: new Date(),
       },
       {
@@ -147,6 +151,8 @@ export class MemStorage implements IStorage {
         medications: JSON.stringify([]),
         allergies: 'Shellfish',
         lastCheckup: new Date('2024-09-20'),
+        customSystolicThreshold: null,
+        customDiastolicThreshold: null,
         createdAt: new Date(),
       },
       {
@@ -163,6 +169,8 @@ export class MemStorage implements IStorage {
         medications: JSON.stringify([]),
         allergies: 'None known',
         lastCheckup: new Date('2024-11-10'),
+        customSystolicThreshold: null,
+        customDiastolicThreshold: null,
         createdAt: new Date(),
       }
     ];

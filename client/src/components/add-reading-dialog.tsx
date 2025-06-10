@@ -76,11 +76,13 @@ export function AddReadingDialog({ open, onOpenChange, selectedPatientId }: AddR
   };
 
   const getBPCategory = (systolic: number, diastolic: number) => {
-    if (systolic >= 180 || diastolic >= 110) return "Stage 2 Hypertension (Critical)";
-    if (systolic >= 140 || diastolic >= 90) return "Stage 1 Hypertension";
-    if (systolic >= 120 && diastolic < 80) return "Elevated Blood Pressure";
-    if (systolic < 90 || diastolic < 60) return "Low Blood Pressure";
-    return "Normal";
+    // AHA Guidelines Implementation
+    if (systolic > 180 || diastolic > 120) return { name: "Hypertensive Crisis", color: "purple", priority: 5 };
+    if (systolic >= 140 || diastolic >= 90) return { name: "High Blood Pressure Stage 2", color: "red", priority: 4 };
+    if ((systolic >= 130 && systolic <= 139) || (diastolic >= 80 && diastolic <= 89)) return { name: "High Blood Pressure Stage 1", color: "orange", priority: 3 };
+    if (systolic >= 120 && systolic <= 129 && diastolic < 80) return { name: "Elevated", color: "yellow", priority: 2 };
+    if (systolic < 120 && diastolic < 80) return { name: "Normal", color: "green", priority: 1 };
+    return { name: "Unknown", color: "gray", priority: 0 };
   };
 
   const watchedSystolic = form.watch("systolic");
@@ -156,14 +158,30 @@ export function AddReadingDialog({ open, onOpenChange, selectedPatientId }: AddR
             </div>
 
             {category && (
-              <div className={`p-3 rounded-lg text-sm ${
-                category.includes("Critical") ? "bg-red-100 text-red-800" :
-                category.includes("Stage 1") ? "bg-orange-100 text-orange-800" :
-                category.includes("Elevated") ? "bg-yellow-100 text-yellow-800" :
-                category.includes("Low") ? "bg-blue-100 text-blue-800" :
-                "bg-green-100 text-green-800"
+              <div className={`p-3 rounded-lg border-l-4 text-sm ${
+                category.color === 'purple' ? 'bg-purple-50 border-purple-500 text-purple-800' :
+                category.color === 'red' ? 'bg-red-50 border-red-500 text-red-800' :
+                category.color === 'orange' ? 'bg-orange-50 border-orange-500 text-orange-800' :
+                category.color === 'yellow' ? 'bg-yellow-50 border-yellow-500 text-yellow-800' :
+                category.color === 'green' ? 'bg-green-50 border-green-500 text-green-800' :
+                'bg-gray-50 border-gray-500 text-gray-800'
               }`}>
-                <strong>Category:</strong> {category}
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    category.color === 'purple' ? 'bg-purple-500' :
+                    category.color === 'red' ? 'bg-red-500' :
+                    category.color === 'orange' ? 'bg-orange-500' :
+                    category.color === 'yellow' ? 'bg-yellow-500' :
+                    category.color === 'green' ? 'bg-green-500' :
+                    'bg-gray-500'
+                  }`} />
+                  <span className="font-medium">{category.name}</span>
+                  {category.priority >= 4 && (
+                    <span className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded-full font-medium ml-auto">
+                      Urgent Follow-up Required
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 
