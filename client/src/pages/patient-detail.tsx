@@ -1,10 +1,10 @@
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { IndividualBPChart } from "@/components/individual-bp-chart";
 
 export default function PatientDetail() {
   const params = useParams();
@@ -208,29 +208,12 @@ export default function PatientDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* BP Trend Chart & Recent Readings */}
           <div className="lg:col-span-2 space-y-6">
-            {/* BP History Chart */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Blood Pressure History</CardTitle>
-                  <div className="flex items-center space-x-2">
-                    <select className="text-sm border border-gray-300 rounded px-3 py-1.5">
-                      <option>Last 30 days</option>
-                      <option>Last 90 days</option>
-                      <option>Last 6 months</option>
-                    </select>
-                    <Button size="sm" variant="outline">
-                      <i className="fas fa-download"></i>
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64">
-                  <canvas ref={chartRef} className="w-full h-full"></canvas>
-                </div>
-              </CardContent>
-            </Card>
+            {/* BP Trend Chart */}
+            <IndividualBPChart
+              patientName={`${patient.firstName} ${patient.lastName}`}
+              readings={patient.readings || []}
+              height="h-96"
+            />
 
             {/* Recent Readings Table */}
             <Card>
