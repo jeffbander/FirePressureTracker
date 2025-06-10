@@ -148,6 +148,11 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      <AddReadingDialog 
+        open={showAddReadingDialog} 
+        onOpenChange={setShowAddReadingDialog} 
+      />
     </div>
   );
 }
