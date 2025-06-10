@@ -104,20 +104,7 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            {/* BP Trends */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>BP Trends</CardTitle>
-                <select className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-primary focus:border-transparent">
-                  <option value="7d">Last 7 days</option>
-                  <option value="30d">Last 30 days</option>
-                  <option value="3m">Last 3 months</option>
-                </select>
-              </CardHeader>
-              <CardContent>
-                <BPChart />
-              </CardContent>
-            </Card>
+
 
             {/* Recent Activity */}
             <Card>
