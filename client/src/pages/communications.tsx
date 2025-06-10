@@ -19,8 +19,8 @@ export default function Communications() {
     outcome: 'all',
     userId: 'all',
     patientId: 'all',
-    dateFrom: null as Date | null,
-    dateTo: null as Date | null,
+    dateFrom: undefined as Date | undefined,
+    dateTo: undefined as Date | undefined,
     sortBy: 'createdAt',
     sortOrder: 'desc'
   });
@@ -105,8 +105,8 @@ export default function Communications() {
       outcome: 'all',
       userId: 'all',
       patientId: 'all',
-      dateFrom: null,
-      dateTo: null,
+      dateFrom: undefined,
+      dateTo: undefined,
       sortBy: 'createdAt',
       sortOrder: 'desc'
     });
@@ -216,7 +216,7 @@ export default function Communications() {
                           {getTypeIcon(type)}
                           <span className="capitalize">{type}</span>
                         </div>
-                        <Badge variant="outline">{count}</Badge>
+                        <Badge variant="outline">{count as number}</Badge>
                       </div>
                     ))}
                   </CardContent>
@@ -230,7 +230,7 @@ export default function Communications() {
                     {Object.entries(analytics.byOutcome).map(([outcome, count]) => (
                       <div key={outcome} className="flex items-center justify-between">
                         <span className="capitalize">{outcome.replace('_', ' ')}</span>
-                        <Badge className={getOutcomeColor(outcome)}>{count}</Badge>
+                        <Badge className={getOutcomeColor(outcome)}>{count as number}</Badge>
                       </div>
                     ))}
                   </CardContent>
@@ -254,7 +254,7 @@ export default function Communications() {
                             <Users className="h-4 w-4" />
                             <span>{name}</span>
                           </div>
-                          <Badge variant="outline">{count} communications</Badge>
+                          <Badge variant="outline">{count as number} communications</Badge>
                         </div>
                       ))}
                   </div>

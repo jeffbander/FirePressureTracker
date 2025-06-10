@@ -546,6 +546,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all users
+  app.get("/api/users", async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
   // Communication logs
   app.post("/api/communications", async (req, res) => {
     try {
@@ -573,8 +583,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json(enhancedLog);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "Invalid communication data", errors: error.errors });
+      const zodError = error as any;
+      if (zodError?.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid communication data", errors: zodError.errors });
       } else {
         res.status(500).json({ message: "Failed to create communication log" });
       }

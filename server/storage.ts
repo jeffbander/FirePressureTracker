@@ -13,6 +13,7 @@ export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   
   // Patient operations
@@ -429,6 +430,102 @@ export class MemStorage implements IStorage {
 
     tasks.forEach(task => {
       this.workflowTasks.set(task.id, task);
+    });
+
+    // Add sample communication logs
+    const communications = [
+      {
+        id: this.currentId++,
+        patientId: 4, // John Smith
+        userId: 2, // Nurse
+        type: 'call' as const,
+        message: 'Called patient regarding high BP reading (158/95). Discussed medication compliance and scheduled follow-up appointment.',
+        notes: 'Patient admitted to missing doses occasionally. Emphasized importance of consistent medication. Scheduled appointment with physician for next week.',
+        outcome: 'resolved' as const,
+        followUpDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+      },
+      {
+        id: this.currentId++,
+        patientId: 5, // Sarah Chen
+        userId: 3, // Coach
+        type: 'call' as const,
+        message: 'Health coaching call with Sarah Chen about lifestyle modifications for BP management.',
+        notes: 'Discussed DASH diet principles, recommended reducing sodium intake, and provided exercise guidelines. Patient receptive to changes.',
+        outcome: 'resolved' as const,
+        followUpDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000)
+      },
+      {
+        id: this.currentId++,
+        patientId: 6, // Mike Thompson
+        userId: 2, // Nurse
+        type: 'call' as const,
+        message: 'Attempted urgent call regarding low BP episodes during shifts.',
+        notes: 'No answer. Left voicemail requesting callback to discuss hydration protocols and shift management.',
+        outcome: 'no_answer' as const,
+        followUpDate: new Date(Date.now() + 4 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000)
+      },
+      {
+        id: this.currentId++,
+        patientId: 6, // Mike Thompson
+        userId: 2, // Nurse
+        type: 'call' as const,
+        message: 'Second call attempt - Patient answered. Discussed low BP readings and hydration strategies.',
+        notes: 'Patient acknowledged dehydration issues during long shifts. Provided hydration schedule and monitoring guidelines.',
+        outcome: 'resolved' as const,
+        followUpDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000)
+      },
+      {
+        id: this.currentId++,
+        patientId: 7, // Lisa Garcia
+        userId: 3, // Coach
+        type: 'email' as const,
+        message: 'Sent educational materials about maintaining healthy BP and wellness tips for firefighters.',
+        notes: 'Included fitness routines specific to firefighter duties and stress management techniques. Follow-up scheduled in 2 weeks.',
+        outcome: 'resolved' as const,
+        followUpDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+      },
+      {
+        id: this.currentId++,
+        patientId: 4, // John Smith
+        userId: 3, // Coach
+        type: 'call' as const,
+        message: 'Follow-up coaching call after physician visit. Reviewed new medication regimen.',
+        notes: 'Patient started on ACE inhibitor. Discussed potential side effects and importance of monitoring. Patient understanding good.',
+        outcome: 'resolved' as const,
+        followUpDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000)
+      },
+      {
+        id: this.currentId++,
+        patientId: 7, // Lisa Garcia
+        userId: 2, // Nurse
+        type: 'call' as const,
+        message: 'Routine check-in call regarding BP monitoring compliance.',
+        notes: 'Patient reports taking readings daily as instructed. Most recent readings within normal range. Encouraged to continue.',
+        outcome: 'resolved' as const,
+        followUpDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      },
+      {
+        id: this.currentId++,
+        patientId: 5, // Sarah Chen
+        userId: 2, // Nurse
+        type: 'call' as const,
+        message: 'Medication adjustment consultation following elevated readings.',
+        notes: 'Spoke with physician about increasing Metoprolol dosage. Patient education provided on new regimen. Will monitor closely.',
+        outcome: 'unresolved' as const,
+        followUpDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 18 * 60 * 60 * 1000)
+      }
+    ];
+
+    communications.forEach(comm => {
+      this.communicationLogs.set(comm.id, comm);
     });
   }
 
