@@ -1,237 +1,202 @@
 import { useQuery } from "@tanstack/react-query";
-import { getQueryFn } from "@/lib/queryClient";
 import { Header } from "@/components/header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle, Clock, Phone, User } from "lucide-react";
+import { AlertTriangle, Clock, User } from "lucide-react";
 
 export default function Workflow() {
-  const { data: tasks = [], isLoading } = useQuery({
+  const { data: tasks, isLoading, error } = useQuery({
     queryKey: ['/api/workflow'],
-    queryFn: getQueryFn({ on401: "throw" }),
+    queryFn: async () => {
+      const response = await fetch('/api/workflow');
+      if (!response.ok) throw new Error('Failed to fetch');
+      return response.json();
+    },
   });
 
-  const { data: patients = [] } = useQuery({
+  const { data: patients } = useQuery({
     queryKey: ['/api/patients'],
-    queryFn: getQueryFn({ on401: "throw" }),
+    queryFn: async () => {
+      const response = await fetch('/api/patients');
+      if (!response.ok) throw new Error('Failed to fetch');
+      return response.json();
+    },
   });
 
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
-        <Header 
-          title="Hypertension Workflow" 
-          subtitle="Automated blood pressure triage and outreach management"
-        />
-        <div className="text-center py-8">Loading workflow tasks...</div>
+        <Header title="Workflow Management" subtitle="Loading workflow tasks..." />
+        <div className="text-center py-8">Loading...</div>
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <Header title="Workflow Management" subtitle="Error loading workflow" />
+        <div className="text-center py-8 text-red-600">Error: {error.message}</div>
+      </div>
+    );
+  }
+
+  const taskList = Array.isArray(tasks) ? tasks : [];
+  const patientList = Array.isArray(patients) ? patients : [];
+
   const getPatientName = (patientId: number) => {
-    const patient = (patients as any[]).find((p: any) => p.id === patientId);
+    const patient = patientList.find((p: any) => p.id === patientId);
     return patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient';
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'urgent': return 'bg-red-100 text-red-800 border-red-300';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-300';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      case 'low': return 'bg-blue-100 text-blue-800 border-blue-300';
-      default: return 'bg-gray-100 text-gray-800 border-gray-300';
+      case 'urgent': return 'bg-red-500 text-white';
+      case 'high': return 'bg-orange-500 text-white';
+      case 'medium': return 'bg-yellow-500 text-white';
+      default: return 'bg-blue-500 text-white';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'in_progress': return 'bg-blue-100 text-blue-800';
-      case 'pending': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed': return 'bg-green-500 text-white';
+      case 'in_progress': return 'bg-blue-500 text-white';
+      default: return 'bg-gray-500 text-white';
     }
   };
 
-  const formatDueDate = (dueDate: string | null) => {
-    if (!dueDate) return 'No due date';
-    const date = new Date(dueDate);
-    const now = new Date();
-    const diffHours = (date.getTime() - now.getTime()) / (1000 * 60 * 60);
-    
-    if (diffHours < 0) {
-      return `Overdue by ${Math.abs(diffHours).toFixed(0)} hours`;
-    } else if (diffHours < 24) {
-      return `Due in ${diffHours.toFixed(0)} hours`;
-    } else {
-      return `Due ${date.toLocaleDateString()}`;
-    }
-  };
-
-  const urgentTasks = (tasks as any[]).filter(task => task.priority === 'urgent');
-  const highTasks = (tasks as any[]).filter(task => task.priority === 'high');
-  const mediumTasks = (tasks as any[]).filter(task => task.priority === 'medium');
-  const pendingTasks = (tasks as any[]).filter(task => task.status === 'pending');
+  const urgentCount = taskList.filter((task: any) => task.priority === 'urgent').length;
+  const highCount = taskList.filter((task: any) => task.priority === 'high').length;
+  const pendingCount = taskList.filter((task: any) => task.status === 'pending').length;
 
   return (
     <div className="container mx-auto p-6">
       <Header 
-        title="Hypertension Workflow" 
-        subtitle="Automated blood pressure triage and outreach management"
+        title="Hypertension Workflow Management" 
+        subtitle="Automated blood pressure triage and outreach tasks"
       />
 
-      {/* Summary Statistics */}
+      {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-gray-600" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Total Tasks</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(tasks as any[]).length}</div>
-            <p className="text-xs text-muted-foreground">Active workflow items</p>
+            <div className="text-2xl font-bold">{taskList.length}</div>
           </CardContent>
         </Card>
-
+        
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Urgent</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-600" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Urgent</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{urgentTasks.length}</div>
-            <p className="text-xs text-muted-foreground">Critical BP readings</p>
+            <div className="text-2xl font-bold text-red-600">{urgentCount}</div>
           </CardContent>
         </Card>
-
+        
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">High Priority</CardTitle>
-            <Clock className="h-4 w-4 text-orange-600" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">High Priority</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{highTasks.length}</div>
-            <p className="text-xs text-muted-foreground">Nurse follow-ups</p>
+            <div className="text-2xl font-bold text-orange-600">{highCount}</div>
           </CardContent>
         </Card>
-
+        
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-            <User className="h-4 w-4 text-blue-600" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Pending</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{pendingTasks.length}</div>
-            <p className="text-xs text-muted-foreground">Awaiting action</p>
+            <div className="text-2xl font-bold text-blue-600">{pendingCount}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* All Tasks List */}
+      {/* Tasks List */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold">All Workflow Tasks</h2>
+        <h2 className="text-xl font-semibold">All Workflow Tasks ({taskList.length})</h2>
         
-        {(tasks as any[]).length === 0 ? (
+        {taskList.length === 0 ? (
           <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
-              No workflow tasks at this time.
+            <CardContent className="py-8 text-center">
+              <p className="text-gray-500">No workflow tasks found.</p>
             </CardContent>
           </Card>
         ) : (
-          (tasks as any[]).map((task: any) => {
-            const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'completed';
-            const isUrgent = task.priority === 'urgent';
-            
-            return (
-              <Card key={task.id} className={`${isOverdue ? 'border-red-500 shadow-md' : ''} ${isUrgent ? 'border-red-400 shadow-lg' : ''}`}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        {isUrgent && <AlertTriangle className="h-4 w-4 text-red-600" />}
-                        <CardTitle className="text-lg font-semibold">{task.title}</CardTitle>
-                      </div>
-                      <CardDescription className="text-sm mb-2">
-                        Patient: {getPatientName(task.patientId)} • Created {new Date(task.createdAt).toLocaleDateString()}
-                      </CardDescription>
-                      <p className="text-sm text-gray-700 mb-3">{task.description}</p>
+          taskList.map((task: any) => (
+            <Card key={task.id} className="border">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      {task.priority === 'urgent' && <AlertTriangle className="h-4 w-4 text-red-600" />}
+                      <h3 className="font-semibold text-lg">{task.title}</h3>
                     </div>
-                    <div className="flex flex-col gap-2 items-end ml-4">
-                      <Badge className={getPriorityColor(task.priority)}>
-                        {task.priority.toUpperCase()}
-                      </Badge>
-                      <Badge variant="outline" className={getStatusColor(task.status)}>
-                        {task.status.replace('_', ' ').toUpperCase()}
-                      </Badge>
+                    
+                    <p className="text-sm text-gray-600 mb-2">
+                      Patient: {getPatientName(task.patientId)} • Task ID: {task.id}
+                    </p>
+                    
+                    <p className="text-sm mb-3">{task.description}</p>
+                    
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      {task.dueDate && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          Due: {new Date(task.dueDate).toLocaleDateString()}
+                        </div>
+                      )}
+                      
+                      {task.assignee && (
+                        <div className="flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          Assigned: {task.assignee.name}
+                        </div>
+                      )}
+                      
+                      <div>
+                        Created: {new Date(task.createdAt).toLocaleDateString()}
+                      </div>
                     </div>
                   </div>
                   
-                  {task.dueDate && (
-                    <div className={`flex items-center gap-1 text-sm ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-600'}`}>
-                      <Clock className="h-3 w-3" />
-                      {formatDueDate(task.dueDate)}
-                    </div>
-                  )}
-
-                  {task.assignee && (
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <User className="h-3 w-3" />
-                      Assigned to: {task.assignee.name} ({task.assignee.role})
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between mt-4">
-                    <div className="text-xs text-gray-500">
-                      Task ID: {task.id}
-                    </div>
-                    <div className="flex gap-2">
-                      {task.status === 'pending' && (
-                        <Button size="sm" variant="outline">
-                          Start Task
-                        </Button>
-                      )}
-                      {task.status === 'in_progress' && (
-                        <Button size="sm">
-                          <Phone className="h-3 w-3 mr-1" />
-                          Mark Complete
-                        </Button>
-                      )}
-                    </div>
+                  <div className="flex flex-col gap-2 ml-4">
+                    <Badge className={getPriorityColor(task.priority)}>
+                      {task.priority.toUpperCase()}
+                    </Badge>
+                    <Badge className={getStatusColor(task.status)}>
+                      {task.status.replace('_', ' ').toUpperCase()}
+                    </Badge>
                   </div>
-                </CardHeader>
-              </Card>
-            );
-          })
+                </div>
+              </CardHeader>
+            </Card>
+          ))
         )}
       </div>
 
-      {/* Workflow Information */}
+      {/* Workflow Info */}
       <Card className="mt-8">
         <CardHeader>
-          <CardTitle>Hypertension Workflow Information</CardTitle>
-          <CardDescription>
-            Automated triage system following clinical guidelines
-          </CardDescription>
+          <CardTitle>Hypertension Workflow Protocol</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <h4 className="font-medium text-red-600">Urgent (≥160/≥100)</h4>
-              <p className="text-sm text-muted-foreground">
-                Patient must be called within 2 hours regardless of recent contact
-              </p>
+            <div>
+              <h4 className="font-medium text-red-600 mb-1">Urgent (≥160/≥100)</h4>
+              <p className="text-sm text-gray-600">Call within 2 hours regardless of recent contact</p>
             </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-orange-600">High Priority (≥150/≥96)</h4>
-              <p className="text-sm text-muted-foreground">
-                Nurse practitioner follow-up within 24 hours
-              </p>
+            <div>
+              <h4 className="font-medium text-orange-600 mb-1">High Priority (≥150/≥96)</h4>
+              <p className="text-sm text-gray-600">Nurse follow-up within 24 hours</p>
             </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-yellow-600">Medium Priority (140-149/90-95)</h4>
-              <p className="text-sm text-muted-foreground">
-                Hypertension coach outreach within 48 hours
-              </p>
+            <div>
+              <h4 className="font-medium text-yellow-600 mb-1">Medium Priority (140-149/90-95)</h4>
+              <p className="text-sm text-gray-600">Coach outreach within 48 hours</p>
             </div>
           </div>
         </CardContent>
