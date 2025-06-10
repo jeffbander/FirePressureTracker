@@ -27,6 +27,8 @@ export const patients = pgTable("patients", {
   medications: text("medications"), // JSON string
   allergies: text("allergies"),
   lastCheckup: timestamp("last_checkup"),
+  customSystolicThreshold: integer("custom_systolic_threshold"), // Custom alert threshold for systolic
+  customDiastolicThreshold: integer("custom_diastolic_threshold"), // Custom alert threshold for diastolic
   createdAt: timestamp("created_at").defaultNow(),
 });
 

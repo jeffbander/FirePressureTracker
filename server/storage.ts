@@ -6,6 +6,7 @@ import {
   type WorkflowTask, type InsertWorkflowTask,
   type CommunicationLog, type InsertCommunicationLog
 } from "@shared/schema";
+import { categorizeBP } from "@shared/bp-utils";
 
 export interface IStorage {
   // User operations
@@ -514,53 +515,44 @@ export class MemStorage implements IStorage {
   }
 
   async createBpReading(insertReading: InsertBpReading): Promise<BpReading> {
-    const { systolic, diastolic } = insertReading;
+    const { systolic, diastolic, patientId } = insertReading;
     
-    // Determine if reading is abnormal and categorize
-    let isAbnormal = false;
-    let category = 'normal';
+    // Get patient to check for custom thresholds
+    const patient = await this.getPatient(patientId);
     
-    if (systolic < 90 || diastolic < 60) {
-      isAbnormal = true;
-      category = 'low';
-    } else if (systolic >= 180 || diastolic >= 120) {
-      isAbnormal = true;
-      category = 'stage2';
-    } else if (systolic >= 140 || diastolic >= 90) {
-      isAbnormal = true;
-      category = 'stage1';
-    } else if (systolic >= 130 || diastolic >= 80) {
-      isAbnormal = true;
-      category = 'elevated';
-    }
-
+    // Categorize BP using AHA guidelines and custom thresholds
+    const bpCategory = categorizeBP(
+      systolic, 
+      diastolic,
+      patient?.customSystolicThreshold || undefined,
+      patient?.customDiastolicThreshold || undefined
+    );
+    
     const reading: BpReading = {
       ...insertReading,
       id: this.currentId++,
+      heartRate: insertReading.heartRate || null,
+      notes: insertReading.notes || null,
       recordedAt: new Date(),
-      isAbnormal,
-      category,
+      isAbnormal: bpCategory.isAbnormal,
+      category: bpCategory.code,
     };
     
-    this.bpReadings.set(reading.id, reading);
-    
     // Auto-create workflow task for abnormal readings
-    if (isAbnormal) {
-      const patient = await this.getPatient(reading.patientId);
-      if (patient) {
-        const priority = category === 'stage2' ? 'high' : category === 'stage1' ? 'medium' : 'low';
-        await this.createWorkflowTask({
-          patientId: reading.patientId,
-          assignedTo: reading.recordedBy,
-          title: `Follow-up for ${category} BP reading`,
-          description: `Patient ${patient.firstName} ${patient.lastName} recorded ${systolic}/${diastolic} mmHg`,
-          priority,
-          status: 'pending',
-          dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Due in 24 hours
-        });
-      }
+    if (bpCategory.isAbnormal) {
+      const priority = bpCategory.priority >= 4 ? 'high' : bpCategory.priority >= 3 ? 'medium' : 'low';
+      await this.createWorkflowTask({
+        patientId: reading.patientId,
+        assignedTo: reading.recordedBy,
+        title: `Follow-up for ${bpCategory.name} reading`,
+        description: `Patient ${patient?.firstName} ${patient?.lastName} recorded ${systolic}/${diastolic} mmHg`,
+        priority,
+        status: 'pending',
+        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Due in 24 hours
+      });
     }
     
+    this.bpReadings.set(reading.id, reading);
     return reading;
   }
 
