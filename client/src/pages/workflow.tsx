@@ -119,7 +119,7 @@ export default function Workflow() {
         </Card>
       </div>
 
-      <Tabs defaultValue="urgent" className="space-y-4">
+      <Tabs defaultValue="all" className="space-y-4">
         <TabsList>
           <TabsTrigger value="urgent">Urgent ({urgentTasks.length})</TabsTrigger>
           <TabsTrigger value="high">High Priority ({highTasks.length})</TabsTrigger>
