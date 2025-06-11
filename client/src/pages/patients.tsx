@@ -123,7 +123,7 @@ export default function Patients() {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Patient Records</h2>
             <span className="text-sm text-gray-600">
-              Showing {patients?.length || 0} patients
+              Showing {Array.isArray(patients) ? patients.length : 0} patients
             </span>
           </div>
           
@@ -139,7 +139,7 @@ export default function Patients() {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {patients?.map((patient: any) => (
+              {Array.isArray(patients) && patients.map((patient: any) => (
                 <Card key={patient.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">

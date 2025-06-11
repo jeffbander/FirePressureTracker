@@ -115,7 +115,7 @@ export function AddReadingDialog({ open, onOpenChange, selectedPatientId }: AddR
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {patients?.map((patient: any) => (
+                      {Array.isArray(patients) && patients.map((patient: any) => (
                         <SelectItem key={patient.id} value={patient.id.toString()}>
                           {patient.firstName} {patient.lastName} (ID: {patient.employeeId})
                         </SelectItem>

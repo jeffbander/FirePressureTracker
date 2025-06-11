@@ -112,7 +112,7 @@ export default function Dashboard() {
                 <CardTitle>Recent Activity</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {recentActivity?.map((activity: any, index: number) => (
+                {Array.isArray(recentActivity) && recentActivity.map((activity: any, index: number) => (
                   <div key={index} className="flex items-start space-x-3">
                     <div className={`w-2 h-2 rounded-full mt-2 ${
                       activity.isAbnormal ? 'bg-destructive' : 'bg-green-600'

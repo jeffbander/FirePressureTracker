@@ -27,7 +27,7 @@ export function StatsCards({ onCardClick }: StatsCardsProps) {
   const cards = [
     {
       title: "Total Patients",
-      value: stats?.totalPatients || 0,
+      value: stats && typeof stats === 'object' && 'totalPatients' in stats ? stats.totalPatients : 0,
       change: "+12% from last month",
       icon: "fas fa-users",
       color: "blue",
@@ -35,7 +35,7 @@ export function StatsCards({ onCardClick }: StatsCardsProps) {
     },
     {
       title: "Abnormal Readings",
-      value: stats?.abnormalReadings || 0,
+      value: stats && typeof stats === 'object' && 'abnormalReadings' in stats ? stats.abnormalReadings : 0,
       change: "Requires follow-up",
       icon: "fas fa-heartbeat",
       color: "red",
@@ -43,7 +43,7 @@ export function StatsCards({ onCardClick }: StatsCardsProps) {
     },
     {
       title: "Pending Calls",
-      value: stats?.pendingCalls || 0,
+      value: stats && typeof stats === 'object' && 'pendingCalls' in stats ? stats.pendingCalls : 0,
       change: "Need contact today",
       icon: "fas fa-phone",
       color: "orange",
@@ -51,7 +51,7 @@ export function StatsCards({ onCardClick }: StatsCardsProps) {
     },
     {
       title: "This Week",
-      value: stats?.todayReadings || 0,
+      value: stats && typeof stats === 'object' && 'todayReadings' in stats ? stats.todayReadings : 0,
       change: "New readings",
       icon: "fas fa-chart-line",
       color: "green",
