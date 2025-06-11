@@ -79,10 +79,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
 
-      // Filter by station if provided
+      // Filter by department if provided (using department instead of station)
       if (station && station !== 'all') {
         filteredPatients = filteredPatients.filter(patient => 
-          patient.station === station
+          patient.department === station
         );
       }
 
@@ -256,8 +256,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate averages and format response
       const trends = Array.from(trendData.entries()).map(([date, data]) => ({
         date,
-        avgSystolic: Math.round(data.systolic.reduce((a, b) => a + b, 0) / data.systolic.length),
-        avgDiastolic: Math.round(data.diastolic.reduce((a, b) => a + b, 0) / data.diastolic.length),
+        avgSystolic: Math.round(data.systolic.reduce((a: number, b: number) => a + b, 0) / data.systolic.length),
+        avgDiastolic: Math.round(data.diastolic.reduce((a: number, b: number) => a + b, 0) / data.diastolic.length),
         normalCount: data.normal,
         abnormalCount: data.abnormal,
       }));

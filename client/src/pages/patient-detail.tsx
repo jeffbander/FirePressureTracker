@@ -1,3 +1,4 @@
+import { useRef, useEffect } from "react";
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/header";
