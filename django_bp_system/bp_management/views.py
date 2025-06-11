@@ -275,3 +275,34 @@ def dashboard_stats(request):
     
     serializer = DashboardStatsSerializer(stats)
     return Response(serializer.data)
+
+
+# Web views for basic Django interface
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
+from django.contrib.auth.decorators import login_required
+
+def web_login_view(request):
+    """Basic web login view"""
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user:
+            auth_login(request, user)
+            return redirect('dashboard')
+    return render(request, 'login.html')
+
+def web_logout_view(request):
+    """Basic web logout view"""
+    auth_logout(request)
+    return redirect('login')
+
+@login_required
+def dashboard_view(request):
+    """Basic dashboard view"""
+    return render(request, 'dashboard.html', {
+        'user': request.user,
+        'total_patients': Patient.objects.count(),
+        'abnormal_readings': BpReading.objects.filter(is_abnormal=True).count(),
+    })
