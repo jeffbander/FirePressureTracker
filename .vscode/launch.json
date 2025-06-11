@@ -8,15 +8,20 @@
             "program": "${workspaceFolder}/django_bp_system/manage.py",
             "args": [
                 "runserver",
-                "0.0.0.0:5000"
+                "0.0.0.0:5000",
+                "--noreload"
             ],
             "django": true,
             "cwd": "${workspaceFolder}/django_bp_system",
             "env": {
-                "DJANGO_SETTINGS_MODULE": "bp_system.settings"
+                "DJANGO_SETTINGS_MODULE": "bp_system.settings",
+                "PYTHONPATH": "${workspaceFolder}/django_bp_system"
             },
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": true,
+            "autoReload": {
+                "enable": true
+            }
         },
         {
             "name": "Django Shell",
