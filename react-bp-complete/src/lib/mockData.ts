@@ -48,6 +48,8 @@ export const mockPatients: Patient[] = [
     medications: JSON.stringify(['Lisinopril 10mg']),
     allergies: 'None',
     lastCheckup: new Date('2024-06-01'),
+    customSystolicThreshold: null,
+    customDiastolicThreshold: null,
     createdAt: new Date('2024-01-15'),
   },
   {
@@ -82,6 +84,8 @@ export const mockPatients: Patient[] = [
     medications: JSON.stringify([]),
     allergies: 'Shellfish',
     lastCheckup: new Date('2024-06-10'),
+    customSystolicThreshold: null,
+    customDiastolicThreshold: null,
     createdAt: new Date('2024-01-17'),
   },
   {
@@ -116,6 +120,8 @@ export const mockPatients: Patient[] = [
     medications: JSON.stringify(['Hydrochlorothiazide 25mg']),
     allergies: 'Sulfa drugs',
     lastCheckup: new Date('2024-06-05'),
+    customSystolicThreshold: null,
+    customDiastolicThreshold: null,
     createdAt: new Date('2024-01-19'),
   },
 ]
@@ -229,6 +235,7 @@ export const mockWorkflowTasks: WorkflowTask[] = [
     priority: 'high',
     status: 'pending',
     dueDate: new Date('2024-06-20'),
+    completedAt: null,
     createdAt: new Date('2024-06-15'),
   },
   {
@@ -240,6 +247,7 @@ export const mockWorkflowTasks: WorkflowTask[] = [
     priority: 'urgent',
     status: 'in_progress',
     dueDate: new Date('2024-06-16'),
+    completedAt: null,
     createdAt: new Date('2024-06-14'),
   },
   {
@@ -251,6 +259,7 @@ export const mockWorkflowTasks: WorkflowTask[] = [
     priority: 'urgent',
     status: 'pending',
     dueDate: new Date('2024-06-17'),
+    completedAt: null,
     createdAt: new Date('2024-06-16'),
   },
   {
@@ -262,6 +271,7 @@ export const mockWorkflowTasks: WorkflowTask[] = [
     priority: 'medium',
     status: 'pending',
     dueDate: new Date('2024-06-22'),
+    completedAt: null,
     createdAt: new Date('2024-06-11'),
   },
 ]
