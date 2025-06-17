@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 11% 98%; /* #F5F7FA */
+    --foreground: 210 11% 15%; /* #1E2532 */
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 210 11% 15%; /* #1E2532 */
+    --popover: 0 0% 100%; /* #FFFFFF */
+    --popover-foreground: 210 11% 15%; /* #1E2532 */
+    --primary: 210 70% 45%; /* #2563EB (Blue) */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF */
+    --secondary: 210 15% 96%; /* #F1F5F9 */
+    --secondary-foreground: 210 11% 15%; /* #1E2532 */
+    --muted: 210 15% 96%; /* #F1F5F9 */
+    --muted-foreground: 210 10% 45%; /* #64748B */
+    --accent: 210 15% 96%; /* #F1F5F9 */
+    --accent-foreground: 210 11% 15%; /* #1E2532 */
+    --destructive: 0 62% 55%; /* #EF4444 */
+    --destructive-foreground: 0 0% 100%; /* #FFFFFF */
+    --border: 210 15% 89%; /* #E2E8F0 */
+    --input: 210 15% 89%; /* #E2E8F0 */
+    --ring: 210 70% 45%; /* #2563EB (Blue) */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 210 15% 7%; /* #0F172A */
+    --foreground: 210 15% 96%; /* #F1F5F9 */
+    --card: 210 15% 7%; /* #0F172A */
+    --card-foreground: 210 15% 96%; /* #F1F5F9 */
+    --popover: 210 15% 7%; /* #0F172A */
+    --popover-foreground: 210 15% 96%; /* #F1F5F9 */
+    --primary: 210 70% 55%; /* #3B82F6 (Blue) */
+    --primary-foreground: 210 15% 7%; /* #0F172A */
+    --secondary: 210 15% 12%; /* #1E293B */
+    --secondary-foreground: 210 15% 96%; /* #F1F5F9 */
+    --muted: 210 15% 12%; /* #1E293B */
+    --muted-foreground: 210 10% 65%; /* #94A3B8 */
+    --accent: 210 15% 12%; /* #1E293B */
+    --accent-foreground: 210 15% 96%; /* #F1F5F9 */
+    --destructive: 0 62% 55%; /* #EF4444 */
+    --destructive-foreground: 210 15% 96%; /* #F1F5F9 */
+    --border: 210 15% 12%; /* #1E293B */
+    --input: 210 15% 12%; /* #1E293B */
+    --ring: 210 70% 55%; /* #3B82F6 (Blue) */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom BP Category Colors */
+.bp-normal { color: #10B981; } /* Green */
+.bp-elevated { color: #F59E0B; } /* Yellow */
+.bp-stage1 { color: #EF4444; } /* Red */
+.bp-stage2 { color: #DC2626; } /* Dark Red */
+.bp-crisis { color: #7C2D12; } /* Very Dark Red */
+.bp-low { color: #3B82F6; } /* Blue */
+
+.bg-bp-normal { background-color: #10B981; }
+.bg-bp-elevated { background-color: #F59E0B; }
+.bg-bp-stage1 { background-color: #EF4444; }
+.bg-bp-stage2 { background-color: #DC2626; }
+.bg-bp-crisis { background-color: #7C2D12; }
+.bg-bp-low { background-color: #3B82F6; }
