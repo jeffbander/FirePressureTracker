@@ -277,7 +277,7 @@ export default function Patients() {
               </div>
 
               {/* Filter Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
                 <Select value={unionFilter} onValueChange={setUnionFilter}>
                   <SelectTrigger>
                     <Building className="h-4 w-4 mr-2" />
@@ -348,22 +348,39 @@ export default function Patients() {
                   </SelectContent>
                 </Select>
 
-                <Select value={viewMode} onValueChange={setViewMode}>
+                <Select value={activityFilter} onValueChange={setActivityFilter}>
                   <SelectTrigger>
                     <Activity className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Activity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Activity</SelectItem>
+                    <SelectItem value="active-7">Active (7 days)</SelectItem>
+                    <SelectItem value="active-30">Active (30 days)</SelectItem>
+                    <SelectItem value="active-90">Active (90 days)</SelectItem>
+                    <SelectItem value="inactive-90">Inactive (90+ days)</SelectItem>
+                    <SelectItem value="inactive-180">Inactive (180+ days)</SelectItem>
+                    <SelectItem value="never-tested">Never Tested</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={viewMode} onValueChange={setViewMode}>
+                  <SelectTrigger>
+                    <Users className="h-4 w-4 mr-2" />
                     <SelectValue placeholder="View" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="cards">Card View</SelectItem>
                     <SelectItem value="table">Table View</SelectItem>
                     <SelectItem value="summary">Summary View</SelectItem>
+                    <SelectItem value="union-breakdown">Union Breakdown</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Clear Filters Button */}
               {(search || statusFilter !== 'all' || unionFilter !== 'all' || ageGroupFilter !== 'all' || 
-                employmentStatusFilter !== 'all' || genderFilter !== 'all') && (
+                employmentStatusFilter !== 'all' || genderFilter !== 'all' || activityFilter !== 'all') && (
                 <Button 
                   variant="outline" 
                   size="sm" 
@@ -374,6 +391,7 @@ export default function Patients() {
                     setAgeGroupFilter('all');
                     setEmploymentStatusFilter('all');
                     setGenderFilter('all');
+                    setActivityFilter('all');
                   }}
                 >
                   Clear All Filters
@@ -428,10 +446,11 @@ export default function Patients() {
 
         {/* Tabbed Views */}
         <Tabs value={viewMode} onValueChange={setViewMode}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="cards">Card View</TabsTrigger>
             <TabsTrigger value="table">Table View</TabsTrigger>
             <TabsTrigger value="summary">Summary View</TabsTrigger>
+            <TabsTrigger value="union-breakdown">Union Breakdown</TabsTrigger>
           </TabsList>
 
           <TabsContent value="cards" className="mt-6">
@@ -599,7 +618,7 @@ export default function Patients() {
           </TabsContent>
 
           <TabsContent value="summary" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Union Distribution */}
               <Card>
                 <CardHeader>
@@ -674,6 +693,251 @@ export default function Patients() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* BP Testing Activity */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    By Activity
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {Object.entries(stats.byActivity || {}).map(([activity, count]) => (
+                      <div key={activity} className="flex items-center justify-between">
+                        <span 
+                          className="cursor-pointer hover:text-blue-600"
+                          onClick={() => setActivityFilter(activity)}
+                        >
+                          {activity === 'active-7' ? 'Active (7 days)' :
+                           activity === 'active-30' ? 'Active (30 days)' :
+                           activity === 'active-90' ? 'Active (90 days)' :
+                           activity === 'inactive-90' ? 'Inactive (90+ days)' :
+                           activity === 'inactive-180' ? 'Inactive (180+ days)' :
+                           activity === 'never-tested' ? 'Never Tested' : activity}
+                        </span>
+                        <Badge variant="outline">{count as number}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="union-breakdown" className="mt-6">
+            <div className="space-y-8">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-semibold">Union-by-Union Breakdown</h2>
+                <span className="text-sm text-gray-600">
+                  Detailed analysis of {filteredPatients.length} patients across all unions
+                </span>
+              </div>
+              
+              {Object.entries(stats.byUnion || {}).map(([unionName, unionTotal]) => {
+                // Get patients for this specific union
+                const unionPatients = filteredPatients.filter(p => p.union === unionName);
+                
+                // Calculate detailed breakdowns for this union
+                const unionBPStatus = unionPatients.reduce((acc: any, patient: any) => {
+                  const status = patient.latestReading?.category || 'no-data';
+                  acc[status] = (acc[status] || 0) + 1;
+                  return acc;
+                }, {});
+
+                const unionAgeGroups = unionPatients.reduce((acc: any, patient: any) => {
+                  const age = patient.age;
+                  let group = 'unknown';
+                  if (age < 30) group = 'under-30';
+                  else if (age < 40) group = '30-39';
+                  else if (age < 50) group = '40-49';
+                  else if (age < 60) group = '50-59';
+                  else group = '60-plus';
+                  acc[group] = (acc[group] || 0) + 1;
+                  return acc;
+                }, {});
+
+                const unionEmployment = unionPatients.reduce((acc: any, patient: any) => {
+                  const status = patient.isRetired ? 'retired' : 'active';
+                  acc[status] = (acc[status] || 0) + 1;
+                  return acc;
+                }, {});
+
+                const unionActivity = unionPatients.reduce((acc: any, patient: any) => {
+                  const latestReading = patient.latestReading;
+                  const now = new Date();
+                  const readingDate = latestReading ? new Date(latestReading.recordedAt) : null;
+                  
+                  let activityStatus = 'never-tested';
+                  if (readingDate) {
+                    const daysDiff = Math.floor((now.getTime() - readingDate.getTime()) / (1000 * 60 * 60 * 24));
+                    
+                    if (daysDiff <= 7) activityStatus = 'active-7';
+                    else if (daysDiff <= 30) activityStatus = 'active-30';
+                    else if (daysDiff <= 90) activityStatus = 'active-90';
+                    else if (daysDiff <= 180) activityStatus = 'inactive-90';
+                    else activityStatus = 'inactive-180';
+                  }
+                  
+                  acc[activityStatus] = (acc[activityStatus] || 0) + 1;
+                  return acc;
+                }, {});
+
+                return (
+                  <Card key={unionName} className="p-6">
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xl font-bold text-blue-600 cursor-pointer hover:text-blue-800"
+                            onClick={() => setUnionFilter(unionName)}>
+                          {unionName}
+                        </h3>
+                        <div className="flex items-center gap-4">
+                          <Badge variant="outline" className="text-lg px-3 py-1">
+                            {unionTotal as number} Total Members
+                          </Badge>
+                          <Button size="sm" variant="outline" onClick={() => setUnionFilter(unionName)}>
+                            View Only {unionName}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      {/* BP Status Breakdown */}
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Heart className="h-4 w-4" />
+                            BP Status
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          {Object.entries(unionBPStatus).map(([status, count]) => (
+                            <div key={status} 
+                                 className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded"
+                                 onClick={() => {
+                                   setUnionFilter(unionName);
+                                   setStatusFilter(status);
+                                 }}>
+                              <span className="text-sm">{getStatusLabel(status)}</span>
+                              <Badge className={getStatusColor(status)} variant="outline">
+                                {count as number}
+                              </Badge>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
+
+                      {/* Age Group Breakdown */}
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            Age Groups
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          {Object.entries(unionAgeGroups).map(([ageGroup, count]) => (
+                            <div key={ageGroup} 
+                                 className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded"
+                                 onClick={() => {
+                                   setUnionFilter(unionName);
+                                   setAgeGroupFilter(ageGroup);
+                                 }}>
+                              <span className="text-sm">{getAgeGroupLabel(ageGroup)}</span>
+                              <Badge variant="outline">{count as number}</Badge>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
+
+                      {/* Employment Status */}
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <UserCheck className="h-4 w-4" />
+                            Employment
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          {Object.entries(unionEmployment).map(([status, count]) => (
+                            <div key={status} 
+                                 className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded"
+                                 onClick={() => {
+                                   setUnionFilter(unionName);
+                                   setEmploymentStatusFilter(status);
+                                 }}>
+                              <span className="text-sm capitalize">{status}</span>
+                              <Badge variant="outline">{count as number}</Badge>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
+
+                      {/* BP Testing Activity */}
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Activity className="h-4 w-4" />
+                            Testing Activity
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          {Object.entries(unionActivity).map(([activity, count]) => (
+                            <div key={activity} 
+                                 className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded"
+                                 onClick={() => {
+                                   setUnionFilter(unionName);
+                                   setActivityFilter(activity);
+                                 }}>
+                              <span className="text-xs">
+                                {activity === 'active-7' ? 'Active (7d)' :
+                                 activity === 'active-30' ? 'Active (30d)' :
+                                 activity === 'active-90' ? 'Active (90d)' :
+                                 activity === 'inactive-90' ? 'Inactive (90d+)' :
+                                 activity === 'inactive-180' ? 'Inactive (180d+)' :
+                                 activity === 'never-tested' ? 'Never Tested' : activity}
+                              </span>
+                              <Badge variant="outline">{count as number}</Badge>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Quick Stats Row */}
+                    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div>
+                          <div className="text-2xl font-bold text-red-600">
+                            {(unionBPStatus.stage2 || 0) + (unionBPStatus.hypertensive_crisis || 0)}
+                          </div>
+                          <div className="text-xs text-gray-600">High Risk BP</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-green-600">
+                            {(unionActivity['active-30'] || 0) + (unionActivity['active-7'] || 0)}
+                          </div>
+                          <div className="text-xs text-gray-600">Active (30d)</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-purple-600">
+                            {unionEmployment.retired || 0}
+                          </div>
+                          <div className="text-xs text-gray-600">Retired</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-orange-600">
+                            {unionActivity['never-tested'] || 0}
+                          </div>
+                          <div className="text-xs text-gray-600">Never Tested</div>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           </TabsContent>
         </Tabs>
