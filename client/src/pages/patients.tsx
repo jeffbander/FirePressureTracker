@@ -1563,8 +1563,8 @@ export default function Patients() {
                         const lastContactDays = hasContact ? Math.floor(Math.random() * 60) : null;
                         const contactType = hasContact ? (isHighRisk ? 'Phone' : (Math.random() > 0.5 ? 'Phone' : 'Email')) : 'None';
                         const outcome = hasContact ? 
-                          ['Successful', 'Left Voicemail', 'No Answer', 'Follow-up Scheduled'][Math.floor(Math.random() * 4)] : 
-                          'No Contact';
+                          ['done', 'left vm', 'in progress', 'needs call'][Math.floor(Math.random() * 4)] : 
+                          'needs call';
                         
                         const needsFollowup = isHighRisk || (isElevated && Math.random() > 0.3) || (!hasContact);
                         const followupDays = needsFollowup ? Math.floor(Math.random() * 30) + 1 : null;
@@ -1602,9 +1602,9 @@ export default function Patients() {
                             </TableCell>
                             <TableCell>
                               <Badge variant={
-                                outcome === 'Successful' ? 'default' :
-                                outcome === 'Follow-up Scheduled' ? 'secondary' :
-                                outcome === 'No Contact' ? 'destructive' : 'outline'
+                                outcome === 'done' ? 'default' :
+                                outcome === 'in progress' ? 'secondary' :
+                                outcome === 'needs call' ? 'destructive' : 'outline'
                               }>
                                 {outcome}
                               </Badge>
