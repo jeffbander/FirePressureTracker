@@ -1774,19 +1774,19 @@ export default function Patients() {
                       </div>
                     </div>
 
-                    {/* This Week's Follow-ups */}
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-orange-500" />
-                        This Week ({(() => {
-                          return filteredPatients.filter(p => {
-                            const isElevated = p.latestReading?.category === 'stage1' || 
-                                             p.latestReading?.category === 'elevated';
-                            return isElevated && Math.random() > 0.5;
-                          }).length;
-                        })()})
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {/* This Week's Follow-ups */}
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-orange-500" />
+                          This Week ({(() => {
+                            return filteredPatients.filter(p => {
+                              const isElevated = p.latestReading?.category === 'stage1' || 
+                                               p.latestReading?.category === 'elevated';
+                              return isElevated && Math.random() > 0.5;
+                            }).length;
+                          })()})
+                        </h4>
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
                         {filteredPatients
                           .filter(p => {
                             const isElevated = p.latestReading?.category === 'stage1' || 
