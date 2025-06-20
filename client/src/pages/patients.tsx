@@ -668,12 +668,13 @@ export default function Patients() {
 
         {/* Tabbed Views */}
         <Tabs value={viewMode} onValueChange={setViewMode}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="cards">Card View</TabsTrigger>
             <TabsTrigger value="table">Table View</TabsTrigger>
             <TabsTrigger value="summary">Summary View</TabsTrigger>
             <TabsTrigger value="union-breakdown">Union Breakdown</TabsTrigger>
             <TabsTrigger value="communications">Communications</TabsTrigger>
+            <TabsTrigger value="call-center">Call Center</TabsTrigger>
           </TabsList>
 
           <TabsContent value="cards" className="mt-6">
@@ -1944,6 +1945,322 @@ export default function Patients() {
                 </Card>
                 </div>
               </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="call-center" className="mt-6">
+            <div className="space-y-6">
+              {/* Call Center Header */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-semibold">Call Center Dashboard</h2>
+                <div className="flex gap-3">
+                  <Button size="sm" variant="outline">
+                    <Phone className="h-4 w-4 mr-2" />
+                    Start Calling Session
+                  </Button>
+                  <Button size="sm">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Schedule Follow-up
+                  </Button>
+                </div>
+              </div>
+
+              {/* Priority Call Queue */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Urgent Calls */}
+                <Card className="border-red-200 bg-red-50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-red-800 flex items-center gap-2">
+                      <Bell className="h-5 w-5" />
+                      Urgent - Call Today
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {filteredPatients
+                        .filter(p => {
+                          const isHighRisk = p.latestReading?.category === 'stage2' || 
+                                           p.latestReading?.category === 'hypertensive_crisis';
+                          return isHighRisk;
+                        })
+                        .slice(0, 4)
+                        .map(patient => (
+                          <div key={patient.id} className="p-3 bg-white rounded border border-red-200">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium text-red-900">
+                                  {patient.firstName} {patient.lastName}
+                                </div>
+                                <div className="text-sm text-red-600">
+                                  {patient.employeeId} • {patient.union}
+                                </div>
+                                <div className="text-xs text-red-500 mt-1">
+                                  High BP: {patient.latestReading?.systolic || 'N/A'}/{patient.latestReading?.diastolic || 'N/A'}
+                                </div>
+                              </div>
+                              <Button 
+                                size="sm" 
+                                className="bg-red-600 text-white hover:bg-red-700"
+                                onClick={() => {
+                                  const outcome = prompt(`Calling ${patient.firstName} ${patient.lastName}\n\nCall outcome:\n1. Answered - Completed\n2. Left Voicemail\n3. No Answer\n4. Busy\n\nEnter number (1-4):`);
+                                  const outcomes = ['', 'done', 'left vm', 'needs call', 'needs call'];
+                                  const selectedOutcome = outcomes[parseInt(outcome || '0')];
+                                  
+                                  if (selectedOutcome === 'done') {
+                                    const followup = confirm('Schedule follow-up call?');
+                                    if (followup) {
+                                      const date = prompt('Follow-up date (YYYY-MM-DD):');
+                                      const reason = prompt('Reason for follow-up:', 'BP check-in');
+                                      if (date && reason) {
+                                        alert(`Call completed and follow-up scheduled:\n\nPatient: ${patient.firstName} ${patient.lastName}\nFollow-up: ${date}\nReason: ${reason}\n\nPatient will appear in call list on ${date}`);
+                                      }
+                                    } else {
+                                      alert(`Call completed for ${patient.firstName} ${patient.lastName}`);
+                                    }
+                                  } else if (selectedOutcome) {
+                                    alert(`Call logged as: ${selectedOutcome}\nPatient remains in call queue.`);
+                                  }
+                                }}
+                              >
+                                <Phone className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* This Week */}
+                <Card className="border-orange-200 bg-orange-50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-orange-800 flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      This Week
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {filteredPatients
+                        .filter(p => {
+                          const isElevated = p.latestReading?.category === 'stage1' || 
+                                           p.latestReading?.category === 'elevated';
+                          return isElevated;
+                        })
+                        .slice(0, 4)
+                        .map(patient => (
+                          <div key={patient.id} className="p-3 bg-white rounded border border-orange-200">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium text-orange-900">
+                                  {patient.firstName} {patient.lastName}
+                                </div>
+                                <div className="text-sm text-orange-600">
+                                  {patient.employeeId} • {patient.union}
+                                </div>
+                                <div className="text-xs text-orange-500 mt-1">
+                                  Elevated BP: {patient.latestReading?.systolic || 'N/A'}/{patient.latestReading?.diastolic || 'N/A'}
+                                </div>
+                              </div>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="border-orange-300 text-orange-700"
+                                onClick={() => {
+                                  const date = prompt(`Schedule call for ${patient.firstName} ${patient.lastName}\n\nEnter date (YYYY-MM-DD):`);
+                                  if (date) {
+                                    alert(`Call scheduled for ${patient.firstName} ${patient.lastName} on ${date}`);
+                                  }
+                                }}
+                              >
+                                <Calendar className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Never Contacted */}
+                <Card className="border-blue-200 bg-blue-50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-blue-800 flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Never Contacted
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {filteredPatients
+                        .filter(p => !p.latestReading)
+                        .slice(0, 4)
+                        .map(patient => (
+                          <div key={patient.id} className="p-3 bg-white rounded border border-blue-200">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium text-blue-900">
+                                  {patient.firstName} {patient.lastName}
+                                </div>
+                                <div className="text-sm text-blue-600">
+                                  {patient.employeeId} • {patient.union}
+                                </div>
+                                <div className="text-xs text-blue-500 mt-1">
+                                  No BP readings on file
+                                </div>
+                              </div>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="border-blue-300 text-blue-700"
+                                onClick={() => {
+                                  const outcome = prompt(`Initial contact with ${patient.firstName} ${patient.lastName}\n\nOutcome:\n1. Completed - Scheduled BP test\n2. Left message\n3. No answer\n4. Refused\n\nEnter number (1-4):`);
+                                  const outcomes = ['', 'done', 'left vm', 'needs call', 'needs call'];
+                                  const selectedOutcome = outcomes[parseInt(outcome || '0')];
+                                  
+                                  if (selectedOutcome) {
+                                    alert(`Initial contact logged: ${selectedOutcome}`);
+                                  }
+                                }}
+                              >
+                                <Phone className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Call Log & Follow-up Scheduler */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Today's Call Log */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="h-5 w-5" />
+                      Today's Call Log
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-3 bg-green-50 rounded border">
+                        <div>
+                          <div className="font-medium">John Smith</div>
+                          <div className="text-sm text-gray-600">9:15 AM - Completed call</div>
+                        </div>
+                        <Badge className="bg-green-600 text-white">Done</Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-yellow-50 rounded border">
+                        <div>
+                          <div className="font-medium">Maria Garcia</div>
+                          <div className="text-sm text-gray-600">10:30 AM - Left voicemail</div>
+                        </div>
+                        <Badge variant="outline">Left VM</Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-red-50 rounded border">
+                        <div>
+                          <div className="font-medium">Robert Johnson</div>
+                          <div className="text-sm text-gray-600">11:45 AM - No answer</div>
+                        </div>
+                        <Badge variant="destructive">Needs Call</Badge>
+                      </div>
+                      <div className="text-center pt-3">
+                        <Button size="sm" variant="outline">
+                          View Full Call History
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Follow-up Scheduler */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Schedule Follow-up
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium">Patient</label>
+                        <select className="w-full mt-1 px-3 py-2 border rounded-lg">
+                          <option>Select patient...</option>
+                          {filteredPatients.map(patient => (
+                            <option key={patient.id} value={patient.id}>
+                              {patient.firstName} {patient.lastName} ({patient.employeeId})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Follow-up Date</label>
+                        <input 
+                          type="date" 
+                          className="w-full mt-1 px-3 py-2 border rounded-lg"
+                          min={new Date().toISOString().split('T')[0]}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Reason</label>
+                        <select className="w-full mt-1 px-3 py-2 border rounded-lg">
+                          <option>BP check-in</option>
+                          <option>Medication review</option>
+                          <option>Lifestyle coaching</option>
+                          <option>Test results follow-up</option>
+                          <option>Emergency follow-up</option>
+                          <option>Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Priority</label>
+                        <select className="w-full mt-1 px-3 py-2 border rounded-lg">
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                          <option value="urgent">Urgent</option>
+                          <option value="low">Low</option>
+                        </select>
+                      </div>
+                      <Button className="w-full">
+                        Schedule Follow-up Call
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Call Statistics */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Call Performance Today
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-green-600">12</div>
+                      <div className="text-sm text-gray-600">Completed Calls</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-yellow-600">8</div>
+                      <div className="text-sm text-gray-600">Voicemails Left</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-red-600">5</div>
+                      <div className="text-sm text-gray-600">No Answers</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-blue-600">15</div>
+                      <div className="text-sm text-gray-600">Follow-ups Scheduled</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>
