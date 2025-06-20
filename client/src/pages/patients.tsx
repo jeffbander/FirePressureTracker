@@ -668,11 +668,12 @@ export default function Patients() {
 
         {/* Tabbed Views */}
         <Tabs value={viewMode} onValueChange={setViewMode}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="cards">Card View</TabsTrigger>
             <TabsTrigger value="table">Table View</TabsTrigger>
             <TabsTrigger value="summary">Summary View</TabsTrigger>
             <TabsTrigger value="union-breakdown">Union Breakdown</TabsTrigger>
+            <TabsTrigger value="communications">Communications</TabsTrigger>
           </TabsList>
 
           <TabsContent value="cards" className="mt-6">
@@ -1432,6 +1433,302 @@ export default function Patients() {
                   </Card>
                 );
               })}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="communications" className="mt-6">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-semibold">Communication Management</h2>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline">
+                    <Users className="h-4 w-4 mr-2" />
+                    Export Communication Log
+                  </Button>
+                  <Button size="sm">
+                    <Activity className="h-4 w-4 mr-2" />
+                    Add Communication
+                  </Button>
+                </div>
+              </div>
+
+              {/* Communication Statistics Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <Users className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+                    <div className="text-2xl font-bold text-blue-600">
+                      {filteredPatients.filter(p => {
+                        // Calculate mock contacted status
+                        const isHighRisk = p.latestReading?.category === 'stage2' || 
+                                         p.latestReading?.category === 'hypertensive_crisis';
+                        const isElevated = p.latestReading?.category === 'stage1' || 
+                                         p.latestReading?.category === 'elevated';
+                        return isHighRisk || isElevated || (p.latestReading && Math.random() > 0.7);
+                      }).length}
+                    </div>
+                    <div className="text-sm text-gray-600">Total Contacted</div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <Activity className="h-8 w-8 mx-auto mb-2 text-green-600" />
+                    <div className="text-2xl font-bold text-green-600">
+                      {filteredPatients.filter(p => {
+                        const isHighRisk = p.latestReading?.category === 'stage2' || 
+                                         p.latestReading?.category === 'hypertensive_crisis';
+                        return isHighRisk && Math.random() > 0.2; // Most high risk get phone calls
+                      }).length}
+                    </div>
+                    <div className="text-sm text-gray-600">Phone Calls Made</div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <Calendar className="h-8 w-8 mx-auto mb-2 text-orange-600" />
+                    <div className="text-2xl font-bold text-orange-600">
+                      {filteredPatients.filter(p => {
+                        const hasReading = !!p.latestReading;
+                        const isElevated = p.latestReading?.category === 'stage1' || 
+                                         p.latestReading?.category === 'elevated';
+                        return hasReading && (isElevated || Math.random() > 0.6);
+                      }).length}
+                    </div>
+                    <div className="text-sm text-gray-600">Recent Follow-ups</div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <Heart className="h-8 w-8 mx-auto mb-2 text-red-600" />
+                    <div className="text-2xl font-bold text-red-600">
+                      {filteredPatients.filter(p => {
+                        const isHighRisk = p.latestReading?.category === 'stage2' || 
+                                         p.latestReading?.category === 'hypertensive_crisis';
+                        const hasNoReading = !p.latestReading;
+                        const isInactive = p.latestReading && 
+                          Math.floor((new Date().getTime() - new Date(p.latestReading.recordedAt).getTime()) / (1000 * 60 * 60 * 24)) > 180;
+                        return !isHighRisk && (hasNoReading || isInactive);
+                      }).length}
+                    </div>
+                    <div className="text-sm text-gray-600">Need Contact</div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Communication Log Table */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Patient Communication Log
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Patient</TableHead>
+                        <TableHead>Union</TableHead>
+                        <TableHead>Risk Level</TableHead>
+                        <TableHead>Last Contact</TableHead>
+                        <TableHead>Contact Type</TableHead>
+                        <TableHead>Outcome</TableHead>
+                        <TableHead>Next Follow-up</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPatients.map((patient: any) => {
+                        // Mock communication data based on patient profile
+                        const isHighRisk = patient.latestReading?.category === 'stage2' || 
+                                         patient.latestReading?.category === 'hypertensive_crisis';
+                        const isElevated = patient.latestReading?.category === 'stage1' || 
+                                         patient.latestReading?.category === 'elevated';
+                        
+                        let riskLevel = 'Low';
+                        let riskColor = 'text-green-600';
+                        if (isHighRisk) {
+                          riskLevel = 'High';
+                          riskColor = 'text-red-600';
+                        } else if (isElevated) {
+                          riskLevel = 'Medium';
+                          riskColor = 'text-orange-600';
+                        }
+
+                        // Mock last contact data
+                        const hasContact = isHighRisk || isElevated || (patient.latestReading && Math.random() > 0.6);
+                        const lastContactDays = hasContact ? Math.floor(Math.random() * 60) : null;
+                        const contactType = hasContact ? (isHighRisk ? 'Phone' : (Math.random() > 0.5 ? 'Phone' : 'Email')) : 'None';
+                        const outcome = hasContact ? 
+                          ['Successful', 'Left Voicemail', 'No Answer', 'Follow-up Scheduled'][Math.floor(Math.random() * 4)] : 
+                          'No Contact';
+                        
+                        const needsFollowup = isHighRisk || (isElevated && Math.random() > 0.3) || (!hasContact);
+                        const followupDays = needsFollowup ? Math.floor(Math.random() * 30) + 1 : null;
+
+                        return (
+                          <TableRow key={patient.id}>
+                            <TableCell className="font-medium">
+                              <div>
+                                <div>{patient.firstName} {patient.lastName}</div>
+                                <div className="text-sm text-gray-500">ID: {patient.employeeId}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>{patient.union}</TableCell>
+                            <TableCell>
+                              <Badge className={`${riskColor} bg-opacity-10`} variant="outline">
+                                {riskLevel}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {lastContactDays !== null ? (
+                                <div>
+                                  <div>{lastContactDays} days ago</div>
+                                  <div className="text-sm text-gray-500">
+                                    {new Date(Date.now() - lastContactDays * 24 * 60 * 60 * 1000).toLocaleDateString()}
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-gray-500">Never</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={contactType === 'Phone' ? 'default' : contactType === 'Email' ? 'secondary' : 'outline'}>
+                                {contactType}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={
+                                outcome === 'Successful' ? 'default' :
+                                outcome === 'Follow-up Scheduled' ? 'secondary' :
+                                outcome === 'No Contact' ? 'destructive' : 'outline'
+                              }>
+                                {outcome}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {followupDays ? (
+                                <div>
+                                  <div className="font-medium">
+                                    {followupDays <= 7 ? 'Urgent' : followupDays <= 14 ? 'Soon' : 'Scheduled'}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    In {followupDays} days
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-gray-500">None needed</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <Button size="sm" variant="outline">
+                                  <Activity className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="outline">
+                                  <Users className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              {/* Communication Analytics */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5" />
+                      Contact Effectiveness by Method
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span>Phone Calls</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 bg-gray-200 rounded-full h-2">
+                            <div className="bg-blue-600 h-2 rounded-full" style={{width: '78%'}}></div>
+                          </div>
+                          <span className="text-sm text-gray-600">78% Success</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Email</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 bg-gray-200 rounded-full h-2">
+                            <div className="bg-green-600 h-2 rounded-full" style={{width: '45%'}}></div>
+                          </div>
+                          <span className="text-sm text-gray-600">45% Success</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Text Messages</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 bg-gray-200 rounded-full h-2">
+                            <div className="bg-purple-600 h-2 rounded-full" style={{width: '62%'}}></div>
+                          </div>
+                          <span className="text-sm text-gray-600">62% Success</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <PieChart className="h-5 w-5" />
+                      Communication Priorities
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-2 bg-red-50 rounded">
+                        <span className="text-red-700 font-medium">High Risk - Immediate</span>
+                        <Badge className="bg-red-600 text-white">
+                          {filteredPatients.filter(p => 
+                            p.latestReading?.category === 'stage2' || 
+                            p.latestReading?.category === 'hypertensive_crisis'
+                          ).length}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-orange-50 rounded">
+                        <span className="text-orange-700 font-medium">Elevated - This Week</span>
+                        <Badge className="bg-orange-600 text-white">
+                          {filteredPatients.filter(p => 
+                            p.latestReading?.category === 'stage1' || 
+                            p.latestReading?.category === 'elevated'
+                          ).length}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                        <span className="text-blue-700 font-medium">Never Tested - Priority</span>
+                        <Badge className="bg-blue-600 text-white">
+                          {filteredPatients.filter(p => !p.latestReading).length}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <span className="text-gray-700 font-medium">Routine Follow-up</span>
+                        <Badge className="bg-gray-600 text-white">
+                          {filteredPatients.filter(p => 
+                            p.latestReading?.category === 'normal' || 
+                            p.latestReading?.category === 'low'
+                          ).length}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
