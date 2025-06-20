@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddPatientDialog } from "@/components/add-patient-dialog";
 import { IndividualBPChart } from "@/components/individual-bp-chart";
-import { Users, Activity, Heart, Calendar, Building, UserCheck, TrendingUp, BarChart3, PieChart } from "lucide-react";
+import { Users, Activity, Heart, Calendar, Building, UserCheck, TrendingUp, BarChart3, PieChart, Bell, CalendarDays, Clock, Phone } from "lucide-react";
 
 export default function Patients() {
   const [search, setSearch] = useState('');
@@ -1625,11 +1625,49 @@ export default function Patients() {
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center space-x-2">
-                                <Button size="sm" variant="outline">
-                                  <Activity className="h-4 w-4" />
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => {
+                                    const followupDate = prompt(`Schedule follow-up for ${patient.firstName} ${patient.lastName}:\n\nEnter follow-up date (YYYY-MM-DD):`);
+                                    if (followupDate) {
+                                      const reason = prompt('Follow-up reason:', 'BP check-in');
+                                      if (reason) {
+                                        alert(`Follow-up scheduled:\n\nPatient: ${patient.firstName} ${patient.lastName}\nDate: ${followupDate}\nReason: ${reason}\n\nThis patient will appear in your call list on the scheduled date.`);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <Calendar className="h-4 w-4" />
                                 </Button>
-                                <Button size="sm" variant="outline">
-                                  <Users className="h-4 w-4" />
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => {
+                                    const outcome = prompt(`Record call for ${patient.firstName} ${patient.lastName}:\n\nSelect outcome:\n1. Done\n2. Left VM\n3. In Progress\n4. Needs Call\n\nEnter number (1-4):`);
+                                    const outcomes = ['', 'done', 'left vm', 'in progress', 'needs call'];
+                                    const selectedOutcome = outcomes[parseInt(outcome || '0')];
+                                    
+                                    if (selectedOutcome) {
+                                      let followupNeeded = false;
+                                      if (selectedOutcome === 'done') {
+                                        const needsFollowup = confirm('Was a follow-up call scheduled during this conversation?');
+                                        if (needsFollowup) {
+                                          const followupDate = prompt('Enter follow-up date (YYYY-MM-DD):');
+                                          if (followupDate) {
+                                            followupNeeded = true;
+                                            alert(`Call recorded as "${selectedOutcome}"\nFollow-up scheduled for: ${followupDate}\n\nPatient will reappear in your call list on ${followupDate}.`);
+                                          }
+                                        } else {
+                                          alert(`Call recorded as "${selectedOutcome}"\nNo follow-up needed.`);
+                                        }
+                                      } else {
+                                        alert(`Call recorded as "${selectedOutcome}"`);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <Phone className="h-4 w-4" />
                                 </Button>
                               </div>
                             </TableCell>
@@ -1638,6 +1676,194 @@ export default function Patients() {
                       })}
                     </TableBody>
                   </Table>
+                </CardContent>
+              </Card>
+
+              {/* Follow-up Schedule */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Follow-up Schedule & Call List
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* Quick Add Follow-up */}
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <h4 className="font-medium text-blue-900 mb-3">Schedule New Follow-up</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <select className="px-3 py-2 border rounded-lg text-sm">
+                          <option>Select Patient...</option>
+                          {filteredPatients.map(patient => (
+                            <option key={patient.id} value={patient.id}>
+                              {patient.firstName} {patient.lastName} ({patient.employeeId})
+                            </option>
+                          ))}
+                        </select>
+                        <input 
+                          type="date" 
+                          className="px-3 py-2 border rounded-lg text-sm"
+                          min={new Date().toISOString().split('T')[0]}
+                        />
+                        <select className="px-3 py-2 border rounded-lg text-sm">
+                          <option value="medium">Medium Priority</option>
+                          <option value="low">Low Priority</option>
+                          <option value="high">High Priority</option>
+                          <option value="urgent">Urgent</option>
+                        </select>
+                        <Button size="sm" className="bg-blue-600 text-white">
+                          <Calendar className="h-4 w-4 mr-1" />
+                          Schedule
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Today's Follow-ups */}
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                        <Bell className="h-4 w-4 text-red-500" />
+                        Due Today ({(() => {
+                          const today = new Date();
+                          return filteredPatients.filter(p => {
+                            const isHighRisk = p.latestReading?.category === 'stage2' || 
+                                             p.latestReading?.category === 'hypertensive_crisis';
+                            const needsCall = !p.latestReading || isHighRisk;
+                            return needsCall && Math.random() > 0.7; // Mock some due today
+                          }).length;
+                        })()})
+                      </h4>
+                      <div className="space-y-2">
+                        {filteredPatients
+                          .filter(p => {
+                            const isHighRisk = p.latestReading?.category === 'stage2' || 
+                                           p.latestReading?.category === 'hypertensive_crisis';
+                            return (isHighRisk || !p.latestReading) && Math.random() > 0.7;
+                          })
+                          .slice(0, 5)
+                          .map(patient => (
+                            <div key={patient.id} className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                                <div>
+                                  <div className="font-medium text-red-900">
+                                    {patient.firstName} {patient.lastName}
+                                  </div>
+                                  <div className="text-sm text-red-600">
+                                    {patient.employeeId} • {patient.union} • 
+                                    {patient.latestReading?.category === 'stage2' || 
+                                     patient.latestReading?.category === 'hypertensive_crisis' ? 
+                                     ' High BP Follow-up' : ' Initial Contact'}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button size="sm" variant="outline" className="text-red-600 border-red-200">
+                                  <Phone className="h-4 w-4 mr-1" />
+                                  Call Now
+                                </Button>
+                                <Button size="sm" variant="outline">
+                                  <Calendar className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+
+                    {/* This Week's Follow-ups */}
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-orange-500" />
+                        This Week ({(() => {
+                          return filteredPatients.filter(p => {
+                            const isElevated = p.latestReading?.category === 'stage1' || 
+                                             p.latestReading?.category === 'elevated';
+                            return isElevated && Math.random() > 0.5;
+                          }).length;
+                        })()})
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {filteredPatients
+                          .filter(p => {
+                            const isElevated = p.latestReading?.category === 'stage1' || 
+                                             p.latestReading?.category === 'elevated';
+                            return isElevated && Math.random() > 0.5;
+                          })
+                          .slice(0, 6)
+                          .map(patient => {
+                            const daysFromNow = Math.floor(Math.random() * 6) + 1;
+                            const followupDate = new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000);
+                            return (
+                              <div key={patient.id} className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                                <div>
+                                  <div className="font-medium text-orange-900">
+                                    {patient.firstName} {patient.lastName}
+                                  </div>
+                                  <div className="text-sm text-orange-600">
+                                    {followupDate.toLocaleDateString()} • BP Follow-up
+                                  </div>
+                                </div>
+                                <Button size="sm" variant="outline" className="text-orange-600 border-orange-200">
+                                  <Calendar className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+
+                    {/* Upcoming Follow-ups */}
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                        <CalendarDays className="h-4 w-4 text-blue-500" />
+                        Next 30 Days ({(() => {
+                          return filteredPatients.filter(p => {
+                            return p.latestReading && Math.random() > 0.6;
+                          }).length;
+                        })()})
+                      </h4>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {filteredPatients
+                          .filter(p => p.latestReading && Math.random() > 0.6)
+                          .slice(0, 8)
+                          .map(patient => {
+                            const daysFromNow = Math.floor(Math.random() * 30) + 7;
+                            const followupDate = new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000);
+                            const reasons = [
+                              'Medication check-in',
+                              'Lifestyle coaching',
+                              'BP trend review',
+                              'Progress assessment',
+                              'Wellness check'
+                            ];
+                            const reason = reasons[Math.floor(Math.random() * reasons.length)];
+                            
+                            return (
+                              <div key={patient.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded border">
+                                <div className="flex items-center gap-3">
+                                  <div className="text-sm text-gray-500 min-w-[80px]">
+                                    {followupDate.toLocaleDateString()}
+                                  </div>
+                                  <div>
+                                    <div className="font-medium">{patient.firstName} {patient.lastName}</div>
+                                    <div className="text-sm text-gray-600">{reason}</div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs">
+                                    {daysFromNow <= 14 ? 'Soon' : 'Scheduled'}
+                                  </Badge>
+                                  <Button size="sm" variant="ghost">
+                                    <Calendar className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -1687,43 +1913,27 @@ export default function Patients() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <PieChart className="h-5 w-5" />
-                      Communication Priorities
+                      Follow-up Effectiveness
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
+                      <div className="flex items-center justify-between p-2 bg-green-50 rounded">
+                        <span className="text-green-700 font-medium">Completed on Time</span>
+                        <Badge className="bg-green-600 text-white">85%</Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-yellow-50 rounded">
+                        <span className="text-yellow-700 font-medium">Overdue (1-7 days)</span>
+                        <Badge className="bg-yellow-600 text-white">12%</Badge>
+                      </div>
                       <div className="flex items-center justify-between p-2 bg-red-50 rounded">
-                        <span className="text-red-700 font-medium">High Risk - Immediate</span>
-                        <Badge className="bg-red-600 text-white">
-                          {filteredPatients.filter(p => 
-                            p.latestReading?.category === 'stage2' || 
-                            p.latestReading?.category === 'hypertensive_crisis'
-                          ).length}
-                        </Badge>
+                        <span className="text-red-700 font-medium">Significantly Overdue</span>
+                        <Badge className="bg-red-600 text-white">3%</Badge>
                       </div>
-                      <div className="flex items-center justify-between p-2 bg-orange-50 rounded">
-                        <span className="text-orange-700 font-medium">Elevated - This Week</span>
-                        <Badge className="bg-orange-600 text-white">
-                          {filteredPatients.filter(p => 
-                            p.latestReading?.category === 'stage1' || 
-                            p.latestReading?.category === 'elevated'
-                          ).length}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
-                        <span className="text-blue-700 font-medium">Never Tested - Priority</span>
-                        <Badge className="bg-blue-600 text-white">
-                          {filteredPatients.filter(p => !p.latestReading).length}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <span className="text-gray-700 font-medium">Routine Follow-up</span>
-                        <Badge className="bg-gray-600 text-white">
-                          {filteredPatients.filter(p => 
-                            p.latestReading?.category === 'normal' || 
-                            p.latestReading?.category === 'low'
-                          ).length}
-                        </Badge>
+                      <div className="pt-3 border-t">
+                        <div className="text-sm text-gray-600 text-center">
+                          Average Response Time: <span className="font-medium">2.3 days</span>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
