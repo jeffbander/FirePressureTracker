@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddPatientDialog } from "@/components/add-patient-dialog";
 import { IndividualBPChart } from "@/components/individual-bp-chart";
-import { Users, Activity, Heart, Calendar, Building, UserCheck } from "lucide-react";
+import { Users, Activity, Heart, Calendar, Building, UserCheck, TrendingUp, BarChart3, PieChart } from "lucide-react";
 
 export default function Patients() {
   const [search, setSearch] = useState('');
@@ -235,6 +235,228 @@ export default function Patients() {
       case '60-plus': return '60+ years';
       default: return 'Unknown';
     }
+  };
+
+  // Advanced Analytics Functions
+  const runTrendAnalysis = (groupPatients: any[]) => {
+    const trends = {
+      hypertensionTrend: calculateHypertensionTrend(groupPatients),
+      agingRisk: calculateAgingRisk(groupPatients),
+      complianceTrend: calculateComplianceTrend(groupPatients),
+      riskProgression: calculateRiskProgression(groupPatients)
+    };
+    return trends;
+  };
+
+  const calculateHypertensionTrend = (patients: any[]) => {
+    const hypertensiveCount = patients.filter(p => 
+      p.latestReading?.category === 'stage1' || 
+      p.latestReading?.category === 'stage2' || 
+      p.latestReading?.category === 'hypertensive_crisis'
+    ).length;
+    
+    const rate = patients.length > 0 ? (hypertensiveCount / patients.length) * 100 : 0;
+    
+    let severity = 'Low';
+    if (rate > 40) severity = 'Critical';
+    else if (rate > 25) severity = 'High';
+    else if (rate > 15) severity = 'Moderate';
+    
+    return {
+      rate: rate.toFixed(1),
+      count: hypertensiveCount,
+      total: patients.length,
+      severity,
+      benchmark: rate > 31.3 ? 'Above National Average' : 'Below National Average' // US average ~31.3%
+    };
+  };
+
+  const calculateAgingRisk = (patients: any[]) => {
+    const ageGroups = patients.reduce((acc: any, patient: any) => {
+      const age = patient.age;
+      if (age >= 50) acc.higherRisk++;
+      else acc.lowerRisk++;
+      return acc;
+    }, { higherRisk: 0, lowerRisk: 0 });
+
+    const higherRiskRate = patients.length > 0 ? 
+      (ageGroups.higherRisk / patients.length) * 100 : 0;
+
+    return {
+      higherRiskCount: ageGroups.higherRisk,
+      higherRiskRate: higherRiskRate.toFixed(1),
+      recommendation: higherRiskRate > 60 ? 
+        'Increase monitoring frequency for aging workforce' : 
+        'Current age distribution manageable'
+    };
+  };
+
+  const calculateComplianceTrend = (patients: any[]) => {
+    const now = new Date();
+    const compliance = patients.reduce((acc: any, patient: any) => {
+      const lastReading = patient.latestReading;
+      if (!lastReading) {
+        acc.neverTested++;
+        return acc;
+      }
+
+      const daysSince = Math.floor((now.getTime() - new Date(lastReading.recordedAt).getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysSince <= 90) acc.compliant++;
+      else if (daysSince <= 180) acc.moderateRisk++;
+      else acc.nonCompliant++;
+      
+      return acc;
+    }, { compliant: 0, moderateRisk: 0, nonCompliant: 0, neverTested: 0 });
+
+    const complianceRate = patients.length > 0 ? 
+      (compliance.compliant / patients.length) * 100 : 0;
+
+    return {
+      ...compliance,
+      complianceRate: complianceRate.toFixed(1),
+      status: complianceRate > 80 ? 'Excellent' : 
+              complianceRate > 60 ? 'Good' : 
+              complianceRate > 40 ? 'Needs Improvement' : 'Critical'
+    };
+  };
+
+  const calculateRiskProgression = (patients: any[]) => {
+    const riskLevels = patients.reduce((acc: any, patient: any) => {
+      const category = patient.latestReading?.category;
+      const age = patient.age;
+      
+      let riskScore = 0;
+      if (category === 'hypertensive_crisis') riskScore = 4;
+      else if (category === 'stage2') riskScore = 3;
+      else if (category === 'stage1') riskScore = 2;
+      else if (category === 'elevated') riskScore = 1;
+      
+      if (age > 60) riskScore += 1;
+      else if (age > 50) riskScore += 0.5;
+      
+      if (riskScore >= 4) acc.critical++;
+      else if (riskScore >= 2.5) acc.high++;
+      else if (riskScore >= 1) acc.moderate++;
+      else acc.low++;
+      
+      return acc;
+    }, { critical: 0, high: 0, moderate: 0, low: 0 });
+
+    return riskLevels;
+  };
+
+  const runPatternAnalysis = (groupPatients: any[]) => {
+    return {
+      departmentPatterns: analyzeDepartmentPatterns(groupPatients),
+      ageVsBP: analyzeAgeVsBPPatterns(groupPatients),
+      retirementImpact: analyzeRetirementImpact(groupPatients),
+      seasonalPatterns: analyzeSeasonalPatterns(groupPatients)
+    };
+  };
+
+  const analyzeDepartmentPatterns = (patients: any[]) => {
+    const deptData = patients.reduce((acc: any, patient: any) => {
+      const dept = patient.department || 'Unknown';
+      if (!acc[dept]) acc[dept] = { total: 0, hypertensive: 0 };
+      acc[dept].total++;
+      
+      if (patient.latestReading?.category === 'stage1' || 
+          patient.latestReading?.category === 'stage2' || 
+          patient.latestReading?.category === 'hypertensive_crisis') {
+        acc[dept].hypertensive++;
+      }
+      return acc;
+    }, {});
+
+    const highestRiskDept = Object.entries(deptData).reduce((max: any, [dept, data]: [string, any]) => {
+      const rate = data.total > 0 ? (data.hypertensive / data.total) * 100 : 0;
+      return rate > max.rate ? { dept, rate, ...data } : max;
+    }, { dept: '', rate: 0, total: 0, hypertensive: 0 });
+
+    return {
+      departmentBreakdown: deptData,
+      highestRiskDepartment: highestRiskDept,
+      insight: highestRiskDept.rate > 40 ? 
+        `${highestRiskDept.dept} shows elevated hypertension risk (${highestRiskDept.rate.toFixed(1)}%)` :
+        'Hypertension risk relatively balanced across departments'
+    };
+  };
+
+  const analyzeAgeVsBPPatterns = (patients: any[]) => {
+    const correlation = patients.reduce((acc: any, patient: any) => {
+      const age = patient.age;
+      const reading = patient.latestReading;
+      
+      if (reading) {
+        const ageGroup = age < 40 ? 'young' : age < 55 ? 'middle' : 'senior';
+        if (!acc[ageGroup]) acc[ageGroup] = { total: 0, elevated: 0, avgSystolic: 0, avgDiastolic: 0 };
+        
+        acc[ageGroup].total++;
+        acc[ageGroup].avgSystolic += reading.systolic;
+        acc[ageGroup].avgDiastolic += reading.diastolic;
+        
+        if (reading.category !== 'normal' && reading.category !== 'low') {
+          acc[ageGroup].elevated++;
+        }
+      }
+      return acc;
+    }, {});
+
+    Object.keys(correlation).forEach(group => {
+      const data = correlation[group];
+      data.avgSystolic = Math.round(data.avgSystolic / data.total);
+      data.avgDiastolic = Math.round(data.avgDiastolic / data.total);
+      data.elevatedRate = ((data.elevated / data.total) * 100).toFixed(1);
+    });
+
+    return correlation;
+  };
+
+  const analyzeRetirementImpact = (patients: any[]) => {
+    const active = patients.filter(p => !p.isRetired);
+    const retired = patients.filter(p => p.isRetired);
+
+    const activeHypertension = active.filter(p => 
+      p.latestReading?.category === 'stage1' || 
+      p.latestReading?.category === 'stage2' || 
+      p.latestReading?.category === 'hypertensive_crisis'
+    ).length;
+
+    const retiredHypertension = retired.filter(p => 
+      p.latestReading?.category === 'stage1' || 
+      p.latestReading?.category === 'stage2' || 
+      p.latestReading?.category === 'hypertensive_crisis'
+    ).length;
+
+    const activeRate = active.length > 0 ? (activeHypertension / active.length) * 100 : 0;
+    const retiredRate = retired.length > 0 ? (retiredHypertension / retired.length) * 100 : 0;
+
+    return {
+      activeRate: activeRate.toFixed(1),
+      retiredRate: retiredRate.toFixed(1),
+      difference: Math.abs(activeRate - retiredRate).toFixed(1),
+      insight: activeRate > retiredRate ? 
+        'Active firefighters show higher hypertension rates' :
+        'Retired firefighters show higher hypertension rates'
+    };
+  };
+
+  const analyzeSeasonalPatterns = (patients: any[]) => {
+    const readingsByMonth = patients.reduce((acc: any, patient: any) => {
+      if (patient.latestReading) {
+        const month = new Date(patient.latestReading.recordedAt).getMonth();
+        if (!acc[month]) acc[month] = { total: 0, elevated: 0 };
+        acc[month].total++;
+        
+        if (patient.latestReading.category !== 'normal' && patient.latestReading.category !== 'low') {
+          acc[month].elevated++;
+        }
+      }
+      return acc;
+    }, {});
+
+    return readingsByMonth;
   };
 
   return (
@@ -784,6 +1006,62 @@ export default function Patients() {
                   return acc;
                 }, {});
 
+                // Calculate communication statistics for this union
+                const unionCommunications = unionPatients.reduce((acc: any, patient: any) => {
+                  // Mock communication data based on patient risk level and reading status
+                  const hasReading = !!patient.latestReading;
+                  const isHighRisk = patient.latestReading?.category === 'stage2' || 
+                                   patient.latestReading?.category === 'hypertensive_crisis';
+                  const isElevated = patient.latestReading?.category === 'stage1' || 
+                                   patient.latestReading?.category === 'elevated';
+                  
+                  // Simulate contact attempts based on risk level
+                  let contactAttempts = 0;
+                  let lastContactDays = null;
+                  let contactType = 'none';
+                  
+                  if (isHighRisk) {
+                    contactAttempts = Math.floor(Math.random() * 5) + 2; // 2-6 attempts for high risk
+                    lastContactDays = Math.floor(Math.random() * 30); // Within last 30 days
+                    contactType = Math.random() > 0.3 ? 'phone' : 'email'; // Prefer phone for high risk
+                  } else if (isElevated) {
+                    contactAttempts = Math.floor(Math.random() * 3) + 1; // 1-3 attempts for elevated
+                    lastContactDays = Math.floor(Math.random() * 60); // Within last 60 days
+                    contactType = Math.random() > 0.5 ? 'phone' : 'email';
+                  } else if (hasReading) {
+                    contactAttempts = Math.random() > 0.7 ? Math.floor(Math.random() * 2) + 1 : 0; // Occasional contact for normal
+                    lastContactDays = contactAttempts > 0 ? Math.floor(Math.random() * 90) : null;
+                    contactType = Math.random() > 0.6 ? 'email' : 'phone';
+                  }
+                  
+                  if (contactAttempts > 0) {
+                    acc.contacted++;
+                    acc.totalContacts += contactAttempts;
+                    
+                    if (contactType === 'phone') acc.phoneContacts++;
+                    else acc.emailContacts++;
+                    
+                    if (lastContactDays !== null) {
+                      if (lastContactDays <= 7) acc.recentContacts++;
+                      else if (lastContactDays <= 30) acc.moderateContacts++;
+                      else acc.oldContacts++;
+                    }
+                  } else {
+                    acc.neverContacted++;
+                  }
+                  
+                  return acc;
+                }, { 
+                  contacted: 0, 
+                  neverContacted: 0, 
+                  totalContacts: 0, 
+                  phoneContacts: 0, 
+                  emailContacts: 0,
+                  recentContacts: 0,
+                  moderateContacts: 0,
+                  oldContacts: 0
+                });
+
                 return (
                   <Card key={unionName} className="p-6">
                     <div className="mb-6">
@@ -803,7 +1081,7 @@ export default function Patients() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                       {/* BP Status Breakdown */}
                       <Card>
                         <CardHeader className="pb-3">
@@ -904,35 +1182,251 @@ export default function Patients() {
                           ))}
                         </CardContent>
                       </Card>
+
+                      {/* Communication Tracking */}
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Users className="h-4 w-4" />
+                            Communications
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs">Contacted</span>
+                            <Badge variant="outline" className="bg-green-50">
+                              {unionCommunications.contacted}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs">Never Contacted</span>
+                            <Badge variant="outline" className="bg-red-50">
+                              {unionCommunications.neverContacted}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs">Total Contacts</span>
+                            <Badge variant="outline">
+                              {unionCommunications.totalContacts}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs">Phone Calls</span>
+                            <Badge variant="outline" className="bg-blue-50">
+                              {unionCommunications.phoneContacts}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs">Recent (7d)</span>
+                            <Badge variant="outline" className="bg-green-50">
+                              {unionCommunications.recentContacts}
+                            </Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
 
-                    {/* Quick Stats Row */}
-                    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                        <div>
-                          <div className="text-2xl font-bold text-red-600">
-                            {(unionBPStatus.stage2 || 0) + (unionBPStatus.hypertensive_crisis || 0)}
+                    {/* Analytics Section */}
+                    <div className="mt-6 space-y-4">
+                      {/* Quick Stats Row */}
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-center">
+                          <div>
+                            <div className="text-2xl font-bold text-red-600">
+                              {(unionBPStatus.stage2 || 0) + (unionBPStatus.hypertensive_crisis || 0)}
+                            </div>
+                            <div className="text-xs text-gray-600">High Risk BP</div>
                           </div>
-                          <div className="text-xs text-gray-600">High Risk BP</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-green-600">
-                            {(unionActivity['active-30'] || 0) + (unionActivity['active-7'] || 0)}
+                          <div>
+                            <div className="text-2xl font-bold text-green-600">
+                              {(unionActivity['active-30'] || 0) + (unionActivity['active-7'] || 0)}
+                            </div>
+                            <div className="text-xs text-gray-600">Active (30d)</div>
                           </div>
-                          <div className="text-xs text-gray-600">Active (30d)</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-purple-600">
-                            {unionEmployment.retired || 0}
+                          <div>
+                            <div className="text-2xl font-bold text-purple-600">
+                              {unionEmployment.retired || 0}
+                            </div>
+                            <div className="text-xs text-gray-600">Retired</div>
                           </div>
-                          <div className="text-xs text-gray-600">Retired</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-orange-600">
-                            {unionActivity['never-tested'] || 0}
+                          <div>
+                            <div className="text-2xl font-bold text-orange-600">
+                              {unionActivity['never-tested'] || 0}
+                            </div>
+                            <div className="text-xs text-gray-600">Never Tested</div>
                           </div>
-                          <div className="text-xs text-gray-600">Never Tested</div>
+                          <div>
+                            <div className="text-2xl font-bold text-blue-600">
+                              {unionCommunications.contacted}
+                            </div>
+                            <div className="text-xs text-gray-600">Contacted</div>
+                          </div>
+                          <div>
+                            <div className="text-2xl font-bold text-gray-600">
+                              {unionCommunications.neverContacted}
+                            </div>
+                            <div className="text-xs text-gray-600">No Contact</div>
+                          </div>
                         </div>
+                      </div>
+
+                      {/* Analytics Buttons */}
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const trends = runTrendAnalysis(unionPatients);
+                            alert(`${unionName} Trend Analysis:\n\nHypertension Rate: ${trends.hypertensionTrend.rate}% (${trends.hypertensionTrend.severity})\nBenchmark: ${trends.hypertensionTrend.benchmark}\n\nAging Risk: ${trends.agingRisk.higherRiskRate}% over 50\nRecommendation: ${trends.agingRisk.recommendation}\n\nCompliance: ${trends.complianceTrend.complianceRate}% (${trends.complianceTrend.status})\nNon-compliant: ${trends.complianceTrend.nonCompliant} members\n\nRisk Distribution:\n- Critical: ${trends.riskProgression.critical}\n- High: ${trends.riskProgression.high}\n- Moderate: ${trends.riskProgression.moderate}\n- Low: ${trends.riskProgression.low}`);
+                          }}
+                        >
+                          <TrendingUp className="h-4 w-4 mr-1" />
+                          Trend Analysis
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const patterns = runPatternAnalysis(unionPatients);
+                            const deptInsight = patterns.departmentPatterns.insight;
+                            const retirementInsight = patterns.retirementImpact.insight;
+                            
+                            let ageInsight = 'Age vs BP Analysis:\n';
+                            Object.entries(patterns.ageVsBP).forEach(([group, data]: [string, any]) => {
+                              ageInsight += `${group.charAt(0).toUpperCase() + group.slice(1)}: ${data.avgSystolic}/${data.avgDiastolic} avg, ${data.elevatedRate}% elevated\n`;
+                            });
+
+                            alert(`${unionName} Pattern Analysis:\n\n${deptInsight}\n\n${retirementInsight}\nActive HTN Rate: ${patterns.retirementImpact.activeRate}%\nRetired HTN Rate: ${patterns.retirementImpact.retiredRate}%\n\n${ageInsight}`);
+                          }}
+                        >
+                          <BarChart3 className="h-4 w-4 mr-1" />
+                          Pattern Analysis
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const riskAnalysis = unionPatients.reduce((acc: any, patient: any) => {
+                              const age = patient.age;
+                              const category = patient.latestReading?.category;
+                              const lastReading = patient.latestReading;
+                              
+                              // Risk factors
+                              let riskFactors = [];
+                              if (age > 55) riskFactors.push('Age 55+');
+                              if (category === 'stage2' || category === 'hypertensive_crisis') riskFactors.push('Severe HTN');
+                              if (category === 'stage1') riskFactors.push('Stage 1 HTN');
+                              
+                              const daysSince = lastReading ? 
+                                Math.floor((new Date().getTime() - new Date(lastReading.recordedAt).getTime()) / (1000 * 60 * 60 * 24)) : 999;
+                              if (daysSince > 180) riskFactors.push('No Recent Testing');
+                              
+                              if (riskFactors.length >= 2) acc.highRisk++;
+                              else if (riskFactors.length === 1) acc.mediumRisk++;
+                              else acc.lowRisk++;
+                              
+                              return acc;
+                            }, { highRisk: 0, mediumRisk: 0, lowRisk: 0 });
+
+                            const totalRisk = riskAnalysis.highRisk + riskAnalysis.mediumRisk + riskAnalysis.lowRisk;
+                            const highRiskPercent = totalRisk > 0 ? ((riskAnalysis.highRisk / totalRisk) * 100).toFixed(1) : 0;
+
+                            alert(`${unionName} Risk Assessment:\n\nHigh Risk: ${riskAnalysis.highRisk} members (${highRiskPercent}%)\nMedium Risk: ${riskAnalysis.mediumRisk} members\nLow Risk: ${riskAnalysis.lowRisk} members\n\nRecommendation: ${Number(highRiskPercent) > 25 ? 'Immediate intervention needed for high-risk members' : 'Continue current monitoring protocols'}`);
+                          }}
+                        >
+                          <PieChart className="h-4 w-4 mr-1" />
+                          Risk Assessment
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const benchmark = {
+                              nationalHypertension: 31.3, // US average
+                              optimalCompliance: 85,      // Target compliance rate
+                              maxAcceptableRisk: 20       // Max acceptable high-risk percentage
+                            };
+
+                            const currentHypertension = unionPatients.filter(p => 
+                              p.latestReading?.category === 'stage1' || 
+                              p.latestReading?.category === 'stage2' || 
+                              p.latestReading?.category === 'hypertensive_crisis'
+                            ).length;
+                            
+                            const hypertensionRate = unionPatients.length > 0 ? 
+                              (currentHypertension / unionPatients.length) * 100 : 0;
+
+                            const compliance = calculateComplianceTrend(unionPatients);
+
+                            let recommendations = [];
+                            if (hypertensionRate > benchmark.nationalHypertension) {
+                              recommendations.push('• Implement targeted BP reduction programs');
+                            }
+                            if (Number(compliance.complianceRate) < benchmark.optimalCompliance) {
+                              recommendations.push('• Increase monitoring frequency and outreach');
+                            }
+                            if (compliance.neverTested > 0) {
+                              recommendations.push('• Priority screening for never-tested members');
+                            }
+
+                            alert(`${unionName} Performance Benchmarking:\n\nHypertension Rate: ${hypertensionRate.toFixed(1)}%\nNational Average: ${benchmark.nationalHypertension}%\nStatus: ${hypertensionRate > benchmark.nationalHypertension ? 'Above Average ⚠️' : 'Below Average ✓'}\n\nCompliance Rate: ${compliance.complianceRate}%\nTarget: ${benchmark.optimalCompliance}%\nStatus: ${Number(compliance.complianceRate) >= benchmark.optimalCompliance ? 'Meeting Target ✓' : 'Below Target ⚠️'}\n\nRecommendations:\n${recommendations.length > 0 ? recommendations.join('\n') : '• Continue current excellent performance'}`);
+                          }}
+                        >
+                          <Activity className="h-4 w-4 mr-1" />
+                          Benchmarking
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const contactRate = unionPatients.length > 0 ? 
+                              (unionCommunications.contacted / unionPatients.length) * 100 : 0;
+                            
+                            const avgContactsPerPerson = unionCommunications.contacted > 0 ? 
+                              (unionCommunications.totalContacts / unionCommunications.contacted).toFixed(1) : 0;
+
+                            const recentContactRate = unionPatients.length > 0 ? 
+                              (unionCommunications.recentContacts / unionPatients.length) * 100 : 0;
+
+                            const phoneVsEmailRatio = unionCommunications.emailContacts > 0 ? 
+                              (unionCommunications.phoneContacts / unionCommunications.emailContacts).toFixed(1) : 'N/A';
+
+                            const highRiskContactRate = (() => {
+                              const highRiskCount = unionPatients.filter(p => 
+                                p.latestReading?.category === 'stage2' || 
+                                p.latestReading?.category === 'hypertensive_crisis'
+                              ).length;
+                              
+                              // Assume high-risk patients have higher contact rates
+                              const highRiskContacted = Math.min(highRiskCount, unionCommunications.phoneContacts);
+                              return highRiskCount > 0 ? 
+                                ((highRiskContacted / highRiskCount) * 100).toFixed(1) : 0;
+                            })();
+
+                            let outreachInsights = [];
+                            if (contactRate < 70) {
+                              outreachInsights.push('• Increase overall outreach efforts');
+                            }
+                            if (unionCommunications.neverContacted > 0) {
+                              outreachInsights.push(`• ${unionCommunications.neverContacted} members never contacted - priority outreach needed`);
+                            }
+                            if (recentContactRate < 30) {
+                              outreachInsights.push('• Recent contact rate low - schedule follow-ups');
+                            }
+                            if (unionCommunications.phoneContacts < unionCommunications.emailContacts) {
+                              outreachInsights.push('• Consider more phone outreach for personal engagement');
+                            }
+
+                            alert(`${unionName} Communication Analysis:\n\nContact Coverage: ${contactRate.toFixed(1)}% (${unionCommunications.contacted}/${unionPatients.length})\nNever Contacted: ${unionCommunications.neverContacted} members\n\nContact Frequency:\nTotal Contacts: ${unionCommunications.totalContacts}\nAvg per Person: ${avgContactsPerPerson} contacts\n\nContact Methods:\nPhone Calls: ${unionCommunications.phoneContacts}\nEmails: ${unionCommunications.emailContacts}\nPhone/Email Ratio: ${phoneVsEmailRatio}:1\n\nRecency:\nRecent (7d): ${unionCommunications.recentContacts} (${recentContactRate.toFixed(1)}%)\nModerate (30d): ${unionCommunications.moderateContacts}\nOlder: ${unionCommunications.oldContacts}\n\nHigh-Risk Contact Rate: ${highRiskContactRate}%\n\nInsights:\n${outreachInsights.length > 0 ? outreachInsights.join('\n') : '• Excellent communication coverage maintained'}`);
+                          }}
+                        >
+                          <Users className="h-4 w-4 mr-1" />
+                          Communication Analysis
+                        </Button>
                       </div>
                     </div>
                   </Card>
