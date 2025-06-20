@@ -20,6 +20,7 @@ export default function Patients() {
   const [ageGroupFilter, setAgeGroupFilter] = useState('all');
   const [employmentStatusFilter, setEmploymentStatusFilter] = useState('all');
   const [genderFilter, setGenderFilter] = useState('all');
+  const [activityFilter, setActivityFilter] = useState('all');
   const [viewMode, setViewMode] = useState('cards');
   const [showAddDialog, setShowAddDialog] = useState(false);
 
@@ -79,6 +80,39 @@ export default function Patients() {
       return false;
     }
 
+    // Activity filter (based on last BP reading timeframe)
+    if (activityFilter !== 'all') {
+      const latestReading = patient.latestReading;
+      const now = new Date();
+      const readingDate = latestReading ? new Date(latestReading.recordedAt) : null;
+      
+      if (!readingDate) {
+        if (activityFilter !== 'never-tested') return false;
+      } else {
+        const daysDiff = Math.floor((now.getTime() - readingDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        switch (activityFilter) {
+          case 'active-7':
+            if (daysDiff > 7) return false;
+            break;
+          case 'active-30':
+            if (daysDiff > 30) return false;
+            break;
+          case 'active-90':
+            if (daysDiff > 90) return false;
+            break;
+          case 'inactive-90':
+            if (daysDiff <= 90) return false;
+            break;
+          case 'inactive-180':
+            if (daysDiff <= 180) return false;
+            break;
+          case 'never-tested':
+            return false; // Has reading, so not never-tested
+        }
+      }
+    }
+
     // Hypertension status filter
     if (statusFilter !== 'all') {
       const latestReading = patient.latestReading;
@@ -129,7 +163,27 @@ export default function Patients() {
       return acc;
     }, {});
 
-    return { byUnion, byHypertensionStatus, byAgeGroup, byEmploymentStatus, byGender };
+    const byActivity = filteredPatients.reduce((acc: any, patient: any) => {
+      const latestReading = patient.latestReading;
+      const now = new Date();
+      const readingDate = latestReading ? new Date(latestReading.recordedAt) : null;
+      
+      let activityStatus = 'never-tested';
+      if (readingDate) {
+        const daysDiff = Math.floor((now.getTime() - readingDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (daysDiff <= 7) activityStatus = 'active-7';
+        else if (daysDiff <= 30) activityStatus = 'active-30';
+        else if (daysDiff <= 90) activityStatus = 'active-90';
+        else if (daysDiff <= 180) activityStatus = 'inactive-90';
+        else activityStatus = 'inactive-180';
+      }
+      
+      acc[activityStatus] = (acc[activityStatus] || 0) + 1;
+      return acc;
+    }, {});
+
+    return { byUnion, byHypertensionStatus, byAgeGroup, byEmploymentStatus, byGender, byActivity };
   };
 
   const stats = getPatientStats();
