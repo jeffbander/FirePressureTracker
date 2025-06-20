@@ -1437,23 +1437,24 @@ export default function Patients() {
           </TabsContent>
 
           <TabsContent value="communications" className="mt-6">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-semibold">Communication Management</h2>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
-                    <Users className="h-4 w-4 mr-2" />
-                    Export Communication Log
-                  </Button>
-                  <Button size="sm">
-                    <Activity className="h-4 w-4 mr-2" />
-                    Add Communication
-                  </Button>
+            <div className="max-w-full overflow-x-auto">
+              <div className="min-w-[1200px] space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">Communication Management</h2>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline">
+                      <Users className="h-4 w-4 mr-1" />
+                      Export
+                    </Button>
+                    <Button size="sm">
+                      <Activity className="h-4 w-4 mr-1" />
+                      Add
+                    </Button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Communication Statistics Overview */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Communication Statistics Overview */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card>
                   <CardContent className="p-4 text-center">
                     <Users className="h-8 w-8 mx-auto mb-2 text-blue-600" />
@@ -1688,11 +1689,11 @@ export default function Patients() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {/* Quick Add Follow-up */}
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <h4 className="font-medium text-blue-900 mb-3">Schedule New Follow-up</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <h4 className="font-medium text-blue-900 mb-2">Schedule New Follow-up</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
                         <select className="px-3 py-2 border rounded-lg text-sm">
                           <option>Select Patient...</option>
                           {filteredPatients.map(patient => (
@@ -1719,21 +1720,23 @@ export default function Patients() {
                       </div>
                     </div>
 
-                    {/* Today's Follow-ups */}
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-                        <Bell className="h-4 w-4 text-red-500" />
-                        Due Today ({(() => {
-                          const today = new Date();
-                          return filteredPatients.filter(p => {
-                            const isHighRisk = p.latestReading?.category === 'stage2' || 
-                                             p.latestReading?.category === 'hypertensive_crisis';
-                            const needsCall = !p.latestReading || isHighRisk;
-                            return needsCall && Math.random() > 0.7; // Mock some due today
-                          }).length;
-                        })()})
-                      </h4>
-                      <div className="space-y-2">
+                    {/* Follow-up Lists - Horizontal Layout */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      {/* Today's Follow-ups */}
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+                          <Bell className="h-4 w-4 text-red-500" />
+                          Due Today ({(() => {
+                            const today = new Date();
+                            return filteredPatients.filter(p => {
+                              const isHighRisk = p.latestReading?.category === 'stage2' || 
+                                               p.latestReading?.category === 'hypertensive_crisis';
+                              const needsCall = !p.latestReading || isHighRisk;
+                              return needsCall && Math.random() > 0.7; 
+                            }).length;
+                          })()})
+                        </h4>
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
                         {filteredPatients
                           .filter(p => {
                             const isHighRisk = p.latestReading?.category === 'stage2' || 
@@ -1863,6 +1866,7 @@ export default function Patients() {
                           })}
                       </div>
                     </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1938,6 +1942,7 @@ export default function Patients() {
                     </div>
                   </CardContent>
                 </Card>
+                </div>
               </div>
             </div>
           </TabsContent>
