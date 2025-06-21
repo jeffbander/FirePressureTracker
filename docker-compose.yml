@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  bp-management:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://bp_user:bp_password@postgres:5432/bp_management
+      - SESSION_SECRET=your-secret-key-change-in-production
+    depends_on:
+      - postgres
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=bp_management
+      - POSTGRES_USER=bp_user
+      - POSTGRES_PASSWORD=bp_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - bp-management
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
