@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { useAuthStore } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -15,8 +15,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
-    password: '',
-    role: 'admin'
+    password: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,19 +86,7 @@ export default function Login() {
               />
             </div>
             
-            <div>
-              <Label htmlFor="role">Role</Label>
-              <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="nurse">Nurse Practitioner</SelectItem>
-                  <SelectItem value="coach">Hypertension Coach</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+
             
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
@@ -107,8 +94,12 @@ export default function Login() {
           </form>
           
           <div className="mt-6 text-center text-sm text-gray-600">
-            <p>Demo Credentials:</p>
-            <p>Admin: admin/admin123 | Nurse: nurse/nurse123</p>
+            <p>Demo Login:</p>
+            <p>Username: admin, nurse, coach, dr.smith, captain.jones</p>
+            <p>Password: Any password (demo mode)</p>
+            <div className="mt-2 text-xs text-gray-500">
+              <p>Role auto-detected from username pattern</p>
+            </div>
           </div>
         </CardContent>
       </Card>

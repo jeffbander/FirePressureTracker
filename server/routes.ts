@@ -4,12 +4,31 @@ import { storage } from "./storage";
 import { insertBpReadingSchema, insertWorkflowTaskSchema, insertCommunicationLogSchema, insertPatientSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Authentication
+  // Authentication with automatic role detection
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { username, password } = req.body;
       
-      const user = await storage.getUserByUsername(username);
+      let user = await storage.getUserByUsername(username);
+      
+      // If user doesn't exist, try to create one based on username patterns
+      if (!user) {
+        const autoRole = determineRoleFromUsername(username);
+        if (autoRole && password) {
+          // Create new user with auto-detected role
+          const newUser = {
+            username,
+            password,
+            name: generateNameFromUsername(username, autoRole),
+            role: autoRole,
+            email: `${username}@firestation.gov`,
+            phone: generatePhoneNumber(),
+            createdAt: new Date(),
+          };
+          user = await storage.createUser(newUser);
+        }
+      }
+      
       if (!user || user.password !== password) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -21,6 +40,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error" });
     }
   });
+
+  // Helper function to determine role from username
+  function determineRoleFromUsername(username: string): string | null {
+    const lowerUsername = username.toLowerCase();
+    
+    // Admin patterns
+    if (lowerUsername.includes('admin') || lowerUsername.includes('doctor') || 
+        lowerUsername.includes('dr') || lowerUsername === 'admin') {
+      return 'admin';
+    }
+    
+    // Nurse patterns
+    if (lowerUsername.includes('nurse') || lowerUsername.includes('rn') || 
+        lowerUsername.includes('np') || lowerUsername.includes('practitioner')) {
+      return 'nurse';
+    }
+    
+    // Coach patterns
+    if (lowerUsername.includes('coach') || lowerUsername.includes('wellness') || 
+        lowerUsername.includes('health') || lowerUsername.includes('coordinator')) {
+      return 'coach';
+    }
+    
+    // Default patterns for common fire department usernames
+    if (lowerUsername.includes('chief') || lowerUsername.includes('captain') || 
+        lowerUsername.includes('lieutenant') || lowerUsername.includes('supervisor')) {
+      return 'admin';
+    }
+    
+    // If no pattern matches, return null (user won't be auto-created)
+    return null;
+  }
+
+  function generateNameFromUsername(username: string, role: string): string {
+    const titles = {
+      admin: ['Dr. ', 'Chief ', 'Captain '],
+      nurse: ['', 'Nurse ', ''],
+      coach: ['', '', 'Coach ']
+    };
+    
+    const firstNames = ['Alex', 'Jordan', 'Casey', 'Taylor', 'Morgan', 'Jamie', 'Riley', 'Avery'];
+    const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis'];
+    
+    const title = titles[role as keyof typeof titles][Math.floor(Math.random() * 3)];
+    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    
+    return `${title}${firstName} ${lastName}`;
+  }
+
+  function generatePhoneNumber(): string {
+    const area = Math.floor(Math.random() * 900) + 100;
+    const exchange = Math.floor(Math.random() * 900) + 100;
+    const number = Math.floor(Math.random() * 9000) + 1000;
+    return `(${area}) ${exchange}-${number}`;
+  }
 
   // Dashboard stats
   app.get("/api/dashboard/stats", async (req, res) => {
