@@ -24,16 +24,24 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (username: string, password: string) => {
     try {
       console.log('Attempting login with:', { username });
-      const response = await apiRequest('POST', '/api/auth/login', { username, password });
-      const data = await response.json();
       
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+        credentials: 'include',
+      });
+      
+      const data = await response.json();
       console.log('Login response:', data);
       
-      if (data.user) {
+      if (response.ok && data.user) {
         set({ user: data.user, isAuthenticated: true });
         return true;
       } else {
-        console.error('No user data in response');
+        console.error('Login failed:', data.message);
         return false;
       }
     } catch (error) {
