@@ -30,6 +30,9 @@ export const patients = pgTable("patients", {
   lastCheckup: timestamp("last_checkup"),
   customSystolicThreshold: integer("custom_systolic_threshold"), // Custom alert threshold for systolic
   customDiastolicThreshold: integer("custom_diastolic_threshold"), // Custom alert threshold for diastolic
+  status: text("status").notNull().default("awaiting_confirmation"), // awaiting_confirmation, awaiting_cuff, active, out_of_program
+  approvedAt: timestamp("approved_at"),
+  approvedBy: integer("approved_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

@@ -21,9 +21,12 @@ export interface IStorage {
   getPatient(id: number): Promise<Patient | undefined>;
   getPatientByEmployeeId(employeeId: string): Promise<Patient | undefined>;
   getAllPatients(): Promise<Patient[]>;
+  getPendingPatients(): Promise<Patient[]>;
+  getPatientsByStatus(status: string): Promise<Patient[]>;
   searchPatients(query: string): Promise<Patient[]>;
   createPatient(patient: InsertPatient): Promise<Patient>;
   updatePatient(id: number, updates: Partial<Patient>): Promise<Patient | undefined>;
+  approvePatient(id: number, approvedBy: number, newStatus: string): Promise<Patient | undefined>;
   
   // BP Reading operations
   getBpReading(id: number): Promise<BpReading | undefined>;
@@ -121,6 +124,9 @@ export class MemStorage implements IStorage {
         lastCheckup: new Date('2024-10-15'),
         customSystolicThreshold: 140,
         customDiastolicThreshold: 90,
+        status: 'active',
+        approvedAt: new Date('2024-10-01'),
+        approvedBy: 1,
         createdAt: new Date(),
       },
       {
@@ -140,6 +146,9 @@ export class MemStorage implements IStorage {
         lastCheckup: new Date('2024-11-01'),
         customSystolicThreshold: 130,
         customDiastolicThreshold: 85,
+        status: 'active',
+        approvedAt: new Date('2024-10-15'),
+        approvedBy: 1,
         createdAt: new Date(),
       },
       {
@@ -159,6 +168,9 @@ export class MemStorage implements IStorage {
         lastCheckup: new Date('2024-09-20'),
         customSystolicThreshold: null,
         customDiastolicThreshold: null,
+        status: 'awaiting_cuff',
+        approvedAt: new Date('2024-11-01'),
+        approvedBy: 2,
         createdAt: new Date(),
       },
       {
@@ -178,6 +190,9 @@ export class MemStorage implements IStorage {
         lastCheckup: new Date('2024-11-10'),
         customSystolicThreshold: null,
         customDiastolicThreshold: null,
+        status: 'active',
+        approvedAt: new Date('2024-11-05'),
+        approvedBy: 1,
         createdAt: new Date(),
       }
     ];
