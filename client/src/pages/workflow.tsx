@@ -25,7 +25,7 @@ export default function Workflow() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="flex-1 ml-64 p-8">
         <Header title="Workflow Management" subtitle="Loading workflow tasks..." />
         <div className="text-center py-8">Loading...</div>
       </div>
@@ -34,7 +34,7 @@ export default function Workflow() {
 
   if (error) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="flex-1 ml-64 p-8">
         <Header title="Workflow Management" subtitle="Error loading workflow" />
         <div className="text-center py-8 text-red-600">Error: {error.message}</div>
       </div>
@@ -71,7 +71,7 @@ export default function Workflow() {
   const pendingCount = taskList.filter((task: any) => task.status === 'pending').length;
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="flex-1 ml-64 p-8">
       <Header 
         title="Hypertension Workflow Management" 
         subtitle="Automated blood pressure triage and outreach tasks"

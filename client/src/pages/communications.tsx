@@ -48,9 +48,9 @@ export default function Communications() {
     queryKey: ['/api/communications', queryParams],
     queryFn: async () => {
       const response = await fetch(`/api/communications?${queryParams}`);
-      if (!response.ok) throw new Error('Failed to fetch');
+      if (!response.ok) throw new Error('Failed to fetch communications');
       return response.json();
-    },
+    }
   });
 
   const { data: analytics } = useQuery({
@@ -59,46 +59,48 @@ export default function Communications() {
       const response = await fetch(`/api/communications/analytics?period=${analyticsPeriod}`);
       if (!response.ok) throw new Error('Failed to fetch analytics');
       return response.json();
-    },
-  });
-
-  const { data: patients = [] } = useQuery({
-    queryKey: ['/api/patients'],
-    queryFn: async () => {
-      const response = await fetch('/api/patients');
-      if (!response.ok) throw new Error('Failed to fetch');
-      return response.json();
-    },
+    }
   });
 
   const { data: users = [] } = useQuery({
     queryKey: ['/api/users'],
     queryFn: async () => {
       const response = await fetch('/api/users');
-      if (!response.ok) throw new Error('Failed to fetch');
+      if (!response.ok) throw new Error('Failed to fetch users');
       return response.json();
-    },
+    }
   });
 
+  const { data: patients = [] } = useQuery({
+    queryKey: ['/api/patients'],
+    queryFn: async () => {
+      const response = await fetch('/api/patients');
+      if (!response.ok) throw new Error('Failed to fetch patients');
+      return response.json();
+    }
+  });
+
+  // Helper functions
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'call': return <Phone className="h-4 w-4" />;
       case 'email': return <Mail className="h-4 w-4" />;
-      default: return <FileText className="h-4 w-4" />;
+      case 'note': return <FileText className="h-4 w-4" />;
+      default: return <User className="h-4 w-4" />;
     }
   };
 
   const getOutcomeColor = (outcome: string) => {
     switch (outcome) {
       case 'resolved': return 'bg-green-100 text-green-800';
-      case 'escalated': return 'bg-red-100 text-red-800';
-      case 'unresolved': return 'bg-yellow-100 text-yellow-800';
-      case 'no_answer': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-blue-100 text-blue-800';
+      case 'in_progress': return 'bg-blue-100 text-blue-800';
+      case 'needs_call': return 'bg-yellow-100 text-yellow-800';
+      case 'left_vm': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const resetFilters = () => {
+  const clearFilters = () => {
     setFilters({
       search: '',
       type: 'all',
@@ -114,7 +116,7 @@ export default function Communications() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="flex-1 ml-64 p-8">
         <Header 
           title="Communication Logs" 
           subtitle="Loading communication records..."
@@ -125,12 +127,12 @@ export default function Communications() {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="flex-1 ml-64 p-8">
       <Header 
         title="Communication Logs" 
         subtitle="Interactive analysis of all patient communications and call records"
       />
-
+      
       <Tabs defaultValue="logs" className="space-y-6">
         <TabsList>
           <TabsTrigger value="logs">Communication Logs</TabsTrigger>
@@ -171,23 +173,23 @@ export default function Communications() {
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Response Rate</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-green-600" />
+                    <CardTitle className="text-sm font-medium">Active Patients</CardTitle>
+                    <Users className="h-4 w-4 text-blue-600" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-green-600">{analytics.responseRate}%</div>
-                    <p className="text-xs text-muted-foreground">Calls successfully answered</p>
+                    <div className="text-2xl font-bold">{analytics.activePatients || 0}</div>
+                    <p className="text-xs text-muted-foreground">With recent communications</p>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Phone Calls</CardTitle>
-                    <Phone className="h-4 w-4 text-orange-600" />
+                    <CardTitle className="text-sm font-medium">Pending Follow-ups</CardTitle>
+                    <Clock className="h-4 w-4 text-orange-600" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-orange-600">{analytics.byType.call || 0}</div>
-                    <p className="text-xs text-muted-foreground">Total phone calls made</p>
+                    <div className="text-2xl font-bold text-orange-600">{analytics.byOutcome.in_progress || 0}</div>
+                    <p className="text-xs text-muted-foreground">Require attention</p>
                   </CardContent>
                 </Card>
 
@@ -248,11 +250,11 @@ export default function Communications() {
                     {Object.entries(analytics.topStaff)
                       .sort(([,a], [,b]) => (b as number) - (a as number))
                       .slice(0, 5)
-                      .map(([name, count]) => (
-                        <div key={name} className="flex items-center justify-between">
+                      .map(([staffName, count]) => (
+                        <div key={staffName} className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4" />
-                            <span>{name}</span>
+                            <User className="h-4 w-4" />
+                            <span>{staffName}</span>
                           </div>
                           <Badge variant="outline">{count as number} communications</Badge>
                         </div>
@@ -265,25 +267,26 @@ export default function Communications() {
         </TabsContent>
 
         <TabsContent value="logs" className="space-y-6">
-          {/* Filters */}
+          {/* Filters and Search */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Filter className="h-5 w-5" />
-                Filters & Search
+                Advanced Search
               </CardTitle>
+              <CardDescription>Filter communications by type, outcome, staff, patient, and date range</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Search</label>
                   <div className="relative">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       placeholder="Search messages, notes, patients..."
                       value={filters.search}
                       onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                      className="pl-8"
+                      className="pl-10"
                     />
                   </div>
                 </div>
@@ -292,13 +295,13 @@ export default function Communications() {
                   <label className="text-sm font-medium">Communication Type</label>
                   <Select value={filters.type} onValueChange={(value) => setFilters(prev => ({ ...prev, type: value }))}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="All Types" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="call">Phone Calls</SelectItem>
-                      <SelectItem value="email">Emails</SelectItem>
-                      <SelectItem value="note">Notes</SelectItem>
+                      <SelectItem value="call">Phone Call</SelectItem>
+                      <SelectItem value="email">Email</SelectItem>
+                      <SelectItem value="note">Note</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -307,43 +310,49 @@ export default function Communications() {
                   <label className="text-sm font-medium">Outcome</label>
                   <Select value={filters.outcome} onValueChange={(value) => setFilters(prev => ({ ...prev, outcome: value }))}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="All Outcomes" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Outcomes</SelectItem>
                       <SelectItem value="resolved">Resolved</SelectItem>
-                      <SelectItem value="unresolved">Unresolved</SelectItem>
-                      <SelectItem value="escalated">Escalated</SelectItem>
-                      <SelectItem value="no_answer">No Answer</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="needs_call">Needs Call</SelectItem>
+                      <SelectItem value="left_vm">Left Voicemail</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Sort By</label>
-                  <Select 
-                    value={`${filters.sortBy}-${filters.sortOrder}`} 
-                    onValueChange={(value) => {
-                      const [sortBy, sortOrder] = value.split('-');
-                      setFilters(prev => ({ ...prev, sortBy, sortOrder }));
-                    }}
-                  >
+                  <Select value={filters.sortBy} onValueChange={(value) => setFilters(prev => ({ ...prev, sortBy: value }))}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Newest First" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="createdAt-desc">Newest First</SelectItem>
-                      <SelectItem value="createdAt-asc">Oldest First</SelectItem>
-                      <SelectItem value="patientName-asc">Patient A-Z</SelectItem>
-                      <SelectItem value="patientName-desc">Patient Z-A</SelectItem>
-                      <SelectItem value="type-asc">Type A-Z</SelectItem>
-                      <SelectItem value="outcome-asc">Outcome A-Z</SelectItem>
+                      <SelectItem value="createdAt">Date</SelectItem>
+                      <SelectItem value="type">Type</SelectItem>
+                      <SelectItem value="outcome">Outcome</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Staff Member</label>
+                  <Select value={filters.userId} onValueChange={(value) => setFilters(prev => ({ ...prev, userId: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Staff" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Staff</SelectItem>
+                      {users.map((user: any) => (
+                        <SelectItem key={user.id} value={user.id.toString()}>
+                          {user.name} ({user.role})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Patient</label>
                   <Select value={filters.patientId} onValueChange={(value) => setFilters(prev => ({ ...prev, patientId: value }))}>
@@ -402,11 +411,8 @@ export default function Communications() {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center">
-                <div className="text-sm text-muted-foreground">
-                  Showing {communications.length} communication{communications.length !== 1 ? 's' : ''}
-                </div>
-                <Button variant="outline" onClick={resetFilters}>
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={clearFilters}>
                   Clear Filters
                 </Button>
               </div>
@@ -417,8 +423,8 @@ export default function Communications() {
           <div className="space-y-4">
             {communications.length === 0 ? (
               <Card>
-                <CardContent className="py-8 text-center">
-                  <p className="text-muted-foreground">No communication logs found matching your filters.</p>
+                <CardContent className="text-center py-8">
+                  <p className="text-muted-foreground">No communications found matching your filters.</p>
                 </CardContent>
               </Card>
             ) : (
@@ -426,26 +432,15 @@ export default function Communications() {
                 <Card key={comm.id} className="hover:shadow-md transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          {getTypeIcon(comm.type)}
-                          <h3 className="font-semibold">
-                            {comm.patient.firstName} {comm.patient.lastName}
-                          </h3>
-                          <Badge variant="outline">{comm.patient.employeeId}</Badge>
-                          <Badge variant="outline">{comm.patient.department}</Badge>
+                      <div className="space-y-1">
+                        <div className="font-medium">
+                          {comm.patient?.firstName} {comm.patient?.lastName}
+                          <span className="text-sm text-muted-foreground ml-2">
+                            ({comm.patient?.employeeId})
+                          </span>
                         </div>
-                        
-                        <p className="text-sm text-gray-700 mb-3">{comm.message}</p>
-                        
-                        {comm.notes && (
-                          <div className="mb-3">
-                            <p className="text-xs font-medium text-gray-600 mb-1">Notes:</p>
-                            <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{comm.notes}</p>
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <p className="text-sm text-muted-foreground">{comm.message}</p>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <User className="h-3 w-3" />
                             {comm.user?.name || 'Unknown'}
