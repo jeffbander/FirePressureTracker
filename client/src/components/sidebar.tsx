@@ -1,6 +1,5 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/lib/auth";
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: 'fas fa-chart-pie' },
@@ -12,7 +11,6 @@ const navigation = [
 
 export function Sidebar() {
   const [location] = useLocation();
-  const { user, logout } = useAuthStore();
 
   return (
     <div className="w-64 bg-white shadow-lg border-r border-gray-200 fixed h-full z-10">
@@ -54,23 +52,9 @@ export function Sidebar() {
       </nav>
       
       <div className="absolute bottom-0 w-full p-6 border-t border-gray-200">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-            <span className="text-white text-sm font-medium">
-              {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
-            </span>
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium">{user?.name}</p>
-            <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
-          </div>
-          <button 
-            onClick={logout}
-            className="text-gray-400 hover:text-gray-600"
-            title="Sign out"
-          >
-            <i className="fas fa-sign-out-alt"></i>
-          </button>
+        <div className="text-center">
+          <p className="text-xs text-gray-500">Fire Department</p>
+          <p className="text-xs text-gray-500">BP Management v1.0</p>
         </div>
       </div>
     </div>

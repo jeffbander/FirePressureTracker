@@ -113,7 +113,15 @@ The system uses a hybrid approach with two different architectures:
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+- June 26, 2025: Added Date of Birth field with automatic age calculation
+- June 26, 2025: Removed authentication requirement - direct access without login
+- June 26, 2025: Updated patient management to show both DOB and calculated age
+- June 26, 2025: Complete standalone deployment package created
+
 ## Changelog
 
 Changelog:
 - June 17, 2025. Initial setup
+- June 26, 2025. DOB implementation and authentication removal

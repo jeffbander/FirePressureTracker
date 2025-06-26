@@ -3,9 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useAuthStore } from "@/lib/auth";
 import { Sidebar } from "@/components/sidebar";
-import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Patients from "@/pages/patients";
 import PatientDetail from "@/pages/patient-detail-new";
@@ -14,38 +12,20 @@ import BPTrends from "@/pages/bp-trends";
 import Communications from "@/pages/communications";
 import NotFound from "@/pages/not-found";
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
-  
-  if (!isAuthenticated) {
-    return <Login />;
-  }
-
+function Router() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
-      {children}
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/patients" component={Patients} />
+        <Route path="/patients/:id" component={PatientDetail} />
+        <Route path="/workflow" component={Workflow} />
+        <Route path="/bp-trends" component={BPTrends} />
+        <Route path="/communications" component={Communications} />
+        <Route component={NotFound} />
+      </Switch>
     </div>
-  );
-}
-
-function Router() {
-  const { isAuthenticated } = useAuthStore();
-
-  if (!isAuthenticated) {
-    return <Login />;
-  }
-
-  return (
-    <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/patients" component={Patients} />
-      <Route path="/patients/:id" component={PatientDetail} />
-      <Route path="/workflow" component={Workflow} />
-      <Route path="/bp-trends" component={BPTrends} />
-      <Route path="/communications" component={Communications} />
-      <Route component={NotFound} />
-    </Switch>
   );
 }
 
@@ -54,9 +34,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <ProtectedRoute>
-          <Router />
-        </ProtectedRoute>
+        <Router />
       </TooltipProvider>
     </QueryClientProvider>
   );
