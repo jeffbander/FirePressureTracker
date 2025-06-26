@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBpReadingSchema, insertWorkflowTaskSchema, insertCommunicationLogSchema, insertPatientSchema } from "@shared/schema";
 import { calculateAge } from "@shared/date-utils";
+import { workflowEventService } from "./services/workflow-events";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication with automatic role detection
@@ -320,14 +321,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid status" });
       }
 
+      // Get current patient data before update
+      const currentPatient = await storage.getPatient(patientId);
+      if (!currentPatient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      const oldStatus = currentPatient.status;
       const updatedPatient = await storage.approvePatient(patientId, approvedBy, newStatus);
       
       if (!updatedPatient) {
         return res.status(404).json({ message: "Patient not found" });
       }
 
+      // Get approver user information for workflow events
+      const approverUser = await storage.getUser(approvedBy);
+
+      // Trigger workflow events for status change
+      await workflowEventService.processStatusChange(updatedPatient, oldStatus, approverUser);
+
       res.json(updatedPatient);
     } catch (error) {
+      console.error('Patient approval error:', error);
       res.status(500).json({ message: "Failed to approve patient" });
     }
   });
