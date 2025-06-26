@@ -10,6 +10,7 @@ import PatientDetail from "@/pages/patient-detail-new";
 import Workflow from "@/pages/workflow";
 import BPTrends from "@/pages/bp-trends";
 import Communications from "@/pages/communications";
+import Approvals from "@/pages/approvals";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -23,6 +24,7 @@ function Router() {
         <Route path="/workflow" component={Workflow} />
         <Route path="/bp-trends" component={BPTrends} />
         <Route path="/communications" component={Communications} />
+        <Route path="/approvals" component={Approvals} />
         <Route component={NotFound} />
       </Switch>
     </div>

@@ -618,10 +618,38 @@ export class MemStorage implements IStorage {
       lastCheckup: insertPatient.lastCheckup ?? null,
       customSystolicThreshold: insertPatient.customSystolicThreshold ?? null,
       customDiastolicThreshold: insertPatient.customDiastolicThreshold ?? null,
+      status: insertPatient.status ?? 'awaiting_confirmation',
+      approvedAt: insertPatient.approvedAt ?? null,
+      approvedBy: insertPatient.approvedBy ?? null,
       createdAt: new Date(),
     };
     this.patients.set(patient.id, patient);
     return patient;
+  }
+
+  async getPendingPatients(): Promise<Patient[]> {
+    return Array.from(this.patients.values()).filter(patient => 
+      patient.status === 'awaiting_confirmation' || patient.status === 'awaiting_cuff'
+    );
+  }
+
+  async getPatientsByStatus(status: string): Promise<Patient[]> {
+    return Array.from(this.patients.values()).filter(patient => patient.status === status);
+  }
+
+  async approvePatient(id: number, approvedBy: number, newStatus: string): Promise<Patient | undefined> {
+    const patient = this.patients.get(id);
+    if (!patient) return undefined;
+
+    const updatedPatient: Patient = {
+      ...patient,
+      status: newStatus,
+      approvedAt: new Date(),
+      approvedBy: approvedBy
+    };
+
+    this.patients.set(id, updatedPatient);
+    return updatedPatient;
   }
 
   async updatePatient(id: number, updates: Partial<Patient>): Promise<Patient | undefined> {

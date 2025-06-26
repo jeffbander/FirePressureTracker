@@ -226,6 +226,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Webhook endpoint for external patient registration
+  app.post("/api/webhook/patients", async (req, res) => {
+    try {
+      // External app sends patient data with all required fields
+      const patientData = {
+        employeeId: req.body.employeeId,
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        dateOfBirth: req.body.dateOfBirth,
+        department: req.body.department,
+        union: req.body.union,
+        email: req.body.email || null,
+        phone: req.body.phone || null,
+        emergencyContact: req.body.emergencyContact || null,
+        allergies: req.body.allergies || null,
+        medications: req.body.medications || null,
+        status: 'awaiting_confirmation' // Always start with awaiting confirmation
+      };
+
+      const validated = insertPatientSchema.parse(patientData);
+      const patient = await storage.createPatient(validated);
+      
+      res.status(201).json({
+        success: true,
+        message: "Patient registration received - awaiting confirmation",
+        patient: patient
+      });
+    } catch (error) {
+      console.error('Webhook error:', error);
+      res.status(400).json({ 
+        success: false,
+        message: "Invalid patient data received from webhook",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Get pending patients for approval
+  app.get("/api/patients/pending", async (req, res) => {
+    try {
+      const pendingPatients = await storage.getPendingPatients();
+      res.json(pendingPatients);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch pending patients" });
+    }
+  });
+
+  // Get patients by status
+  app.get("/api/patients/status/:status", async (req, res) => {
+    try {
+      const { status } = req.params;
+      const patients = await storage.getPatientsByStatus(status);
+      res.json(patients);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch patients by status" });
+    }
+  });
+
+  // Approve patient and change status
+  app.patch("/api/patients/:id/approve", async (req, res) => {
+    try {
+      const patientId = parseInt(req.params.id);
+      const { newStatus, approvedBy } = req.body;
+      
+      // Validate status transition
+      const validStatuses = ['awaiting_confirmation', 'awaiting_cuff', 'active', 'out_of_program'];
+      if (!validStatuses.includes(newStatus)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      const updatedPatient = await storage.approvePatient(patientId, approvedBy, newStatus);
+      
+      if (!updatedPatient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      res.json(updatedPatient);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to approve patient" });
+    }
+  });
+
   // BP Readings
   app.post("/api/readings", async (req, res) => {
     try {
