@@ -152,38 +152,60 @@ export default function Approvals() {
         )}
 
         {selectedStatus === "pending" && (
-          <div className="flex gap-2 pt-4 border-t">
-            {patient.status === "awaiting_confirmation" && (
-              <>
+          <div className="space-y-3 pt-4 border-t">
+            {/* Next Step Buttons */}
+            <div className="flex gap-2">
+              {patient.status === "awaiting_confirmation" && (
+                <>
+                  <Button
+                    onClick={() => handleApproval(patient.id, "awaiting_cuff")}
+                    disabled={approveMutation.isPending}
+                    className="flex-1"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Approve → Awaiting Cuff
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleApproval(patient.id, "out_of_program")}
+                    disabled={approveMutation.isPending}
+                    className="flex-1"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Reject
+                  </Button>
+                </>
+              )}
+              {patient.status === "awaiting_cuff" && (
                 <Button
-                  onClick={() => handleApproval(patient.id, "awaiting_cuff")}
+                  onClick={() => handleApproval(patient.id, "active")}
                   disabled={approveMutation.isPending}
                   className="flex-1"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Approve Registration
+                  Activate → Active
                 </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => handleApproval(patient.id, "out_of_program")}
-                  disabled={approveMutation.isPending}
-                  className="flex-1"
-                >
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Reject
-                </Button>
-              </>
-            )}
-            {patient.status === "awaiting_cuff" && (
-              <Button
-                onClick={() => handleApproval(patient.id, "active")}
+              )}
+            </div>
+            
+            {/* Status Dropdown for Manual Override */}
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-gray-600">Or set status manually:</span>
+              <Select
+                onValueChange={(newStatus) => handleApproval(patient.id, newStatus)}
                 disabled={approveMutation.isPending}
-                className="flex-1"
               >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Mark as Active
-              </Button>
-            )}
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Change status..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="awaiting_confirmation">Awaiting Confirmation</SelectItem>
+                  <SelectItem value="awaiting_cuff">Awaiting Cuff</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="out_of_program">Out of Program</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         )}
 
