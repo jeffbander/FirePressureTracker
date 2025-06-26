@@ -56,13 +56,18 @@ export default function Approvals() {
   // Approve patient mutation
   const approveMutation = useMutation({
     mutationFn: async ({ patientId, newStatus }: { patientId: number; newStatus: string }) => {
-      return apiRequest(`/api/patients/${patientId}/approve`, {
+      const response = await fetch(`/api/patients/${patientId}/approve`, {
         method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           newStatus,
           approvedBy: 1 // In real app, this would be current user ID
         })
       });
+      if (!response.ok) throw new Error('Failed to approve patient');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
@@ -108,7 +113,7 @@ export default function Approvals() {
           <div className="space-y-2">
             <div className="flex items-center text-sm text-gray-600">
               <User className="h-4 w-4 mr-2" />
-              Age: {patient.age} • DOB: {formatDate(patient.dateOfBirth)}
+              Age: {patient.age} • DOB: {patient.dateOfBirth ? formatDate(patient.dateOfBirth) : 'N/A'}
             </div>
             {patient.phone && (
               <div className="flex items-center text-sm text-gray-600">
@@ -134,7 +139,7 @@ export default function Approvals() {
             )}
             <div className="flex items-center text-sm text-gray-600">
               <Calendar className="h-4 w-4 mr-2" />
-              Registered: {formatDate(patient.createdAt)}
+              Registered: {patient.createdAt ? formatDate(patient.createdAt) : 'N/A'}
             </div>
           </div>
         </div>

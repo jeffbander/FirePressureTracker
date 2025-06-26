@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBpReadingSchema, insertWorkflowTaskSchema, insertCommunicationLogSchema, insertPatientSchema } from "@shared/schema";
+import { calculateAge } from "@shared/date-utils";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication with automatic role detection
@@ -229,6 +230,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Webhook endpoint for external patient registration
   app.post("/api/webhook/patients", async (req, res) => {
     try {
+      // Calculate age from date of birth automatically
+      const calculatedAge = calculateAge(req.body.dateOfBirth);
+      
       // External app sends patient data with all required fields
       const patientData = {
         employeeId: req.body.employeeId,
@@ -237,6 +241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dateOfBirth: req.body.dateOfBirth,
         department: req.body.department,
         union: req.body.union,
+        age: calculatedAge, // Calculate age automatically
         email: req.body.email || null,
         phone: req.body.phone || null,
         emergencyContact: req.body.emergencyContact || null,
