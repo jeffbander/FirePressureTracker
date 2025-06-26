@@ -78,6 +78,20 @@ Content-Type: application/json
 }
 ```
 
+#### Response - Duplicate Employee ID (409)
+```json
+{
+  "success": false,
+  "message": "Patient with Employee ID FF-001 already exists",
+  "existingPatient": {
+    "id": 4,
+    "name": "John Rodriguez",
+    "status": "active",
+    "createdAt": "2025-06-26T17:18:57.760Z"
+  }
+}
+```
+
 ## Patient Management API
 
 ### Get Pending Patients
