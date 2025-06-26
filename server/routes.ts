@@ -192,6 +192,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get pending patients for approval (must come before :id route)
+  app.get("/api/patients/pending", async (req, res) => {
+    try {
+      const pendingPatients = await storage.getPendingPatients();
+      res.json(pendingPatients);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch pending patients" });
+    }
+  });
+
+  // Get patients by status (must come before :id route)
+  app.get("/api/patients/status/:status", async (req, res) => {
+    try {
+      const { status } = req.params;
+      const patients = await storage.getPatientsByStatus(status);
+      res.json(patients);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch patients by status" });
+    }
+  });
+
   app.get("/api/patients/:id", async (req, res) => {
     try {
       const patientId = parseInt(req.params.id);
@@ -285,26 +306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get pending patients for approval
-  app.get("/api/patients/pending", async (req, res) => {
-    try {
-      const pendingPatients = await storage.getPendingPatients();
-      res.json(pendingPatients);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch pending patients" });
-    }
-  });
 
-  // Get patients by status
-  app.get("/api/patients/status/:status", async (req, res) => {
-    try {
-      const { status } = req.params;
-      const patients = await storage.getPatientsByStatus(status);
-      res.json(patients);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch patients by status" });
-    }
-  });
 
   // Approve patient and change status
   app.patch("/api/patients/:id/approve", async (req, res) => {
