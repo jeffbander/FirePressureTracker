@@ -122,6 +122,9 @@ Preferred communication style: Simple, everyday language.
 - June 26, 2025: Implemented webhook endpoint for external patient registration
 - June 26, 2025: Added patient approval workflow with status management
 - June 26, 2025: Created approvals interface for managing patient confirmations
+- June 26, 2025: Implemented automated workflow events system with email notifications
+- June 26, 2025: Added automated cuff request emails to sbzakow@mswheart.com
+- June 26, 2025: Created welcome email system for newly activated patients
 
 ## Changelog
 
