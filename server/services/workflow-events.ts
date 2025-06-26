@@ -60,7 +60,7 @@ export class WorkflowEventService {
    */
   private async handleCuffApproval(patient: Patient, approvedBy?: User): Promise<void> {
     const emailNotification: EmailNotification = {
-      to: 'Cuffs@Htn.org',
+      to: 'sbzakow@mswheart.com',
       subject: `BP Cuff Request - ${patient.firstName} ${patient.lastName} (${patient.employeeId})`,
       body: this.generateCuffRequestEmail(patient, approvedBy),
       patientData: {
