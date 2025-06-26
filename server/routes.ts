@@ -230,6 +230,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Webhook endpoint for external patient registration
   app.post("/api/webhook/patients", async (req, res) => {
     try {
+      const { employeeId } = req.body;
+      
+      // Check if patient already exists by employee ID
+      const existingPatient = await storage.getPatientByEmployeeId(employeeId);
+      if (existingPatient) {
+        return res.status(409).json({
+          success: false,
+          message: `Patient with Employee ID ${employeeId} already exists`,
+          existingPatient: {
+            id: existingPatient.id,
+            name: `${existingPatient.firstName} ${existingPatient.lastName}`,
+            status: existingPatient.status,
+            createdAt: existingPatient.createdAt
+          }
+        });
+      }
+
       // Calculate age from date of birth automatically
       const calculatedAge = calculateAge(req.body.dateOfBirth);
       
