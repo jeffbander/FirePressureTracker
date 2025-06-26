@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +27,7 @@ export default function Communications() {
 
   const [analyticsPeriod, setAnalyticsPeriod] = useState('30d');
 
-  // Build query string for API call
+  // Build query string for API call with stable reference
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
     
@@ -43,6 +43,11 @@ export default function Communications() {
     
     return params.toString();
   }, [filters]);
+
+  // Stable filter update function
+  const updateFilters = useCallback((updates: Partial<typeof filters>) => {
+    setFilters(prev => ({ ...prev, ...updates }));
+  }, []);
 
   const { data: communications = [], isLoading } = useQuery({
     queryKey: ['/api/communications', queryParams],
@@ -100,7 +105,7 @@ export default function Communications() {
     }
   };
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setFilters({
       search: '',
       type: 'all',
@@ -112,7 +117,7 @@ export default function Communications() {
       sortBy: 'createdAt',
       sortOrder: 'desc'
     });
-  };
+  }, []);
 
   if (isLoading) {
     return (
@@ -285,7 +290,7 @@ export default function Communications() {
                     <Input
                       placeholder="Search messages, notes, patients..."
                       value={filters.search}
-                      onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                      onChange={(e) => updateFilters({ search: e.target.value })}
                       className="pl-10"
                     />
                   </div>
@@ -293,7 +298,7 @@ export default function Communications() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Communication Type</label>
-                  <Select value={filters.type} onValueChange={(value) => setFilters(prev => ({ ...prev, type: value }))}>
+                  <Select value={filters.type} onValueChange={(value) => updateFilters({ type: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
@@ -308,7 +313,7 @@ export default function Communications() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Outcome</label>
-                  <Select value={filters.outcome} onValueChange={(value) => setFilters(prev => ({ ...prev, outcome: value }))}>
+                  <Select value={filters.outcome} onValueChange={(value) => updateFilters({ outcome: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="All Outcomes" />
                     </SelectTrigger>
@@ -324,7 +329,7 @@ export default function Communications() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Sort By</label>
-                  <Select value={filters.sortBy} onValueChange={(value) => setFilters(prev => ({ ...prev, sortBy: value }))}>
+                  <Select value={filters.sortBy} onValueChange={(value) => updateFilters({ sortBy: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Newest First" />
                     </SelectTrigger>
@@ -338,7 +343,7 @@ export default function Communications() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Staff Member</label>
-                  <Select value={filters.userId} onValueChange={(value) => setFilters(prev => ({ ...prev, userId: value }))}>
+                  <Select value={filters.userId} onValueChange={(value) => updateFilters({ userId: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="All Staff" />
                     </SelectTrigger>
@@ -355,7 +360,7 @@ export default function Communications() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Patient</label>
-                  <Select value={filters.patientId} onValueChange={(value) => setFilters(prev => ({ ...prev, patientId: value }))}>
+                  <Select value={filters.patientId} onValueChange={(value) => updateFilters({ patientId: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="All Patients" />
                     </SelectTrigger>
@@ -383,7 +388,7 @@ export default function Communications() {
                       <Calendar
                         mode="single"
                         selected={filters.dateFrom}
-                        onSelect={(date) => setFilters(prev => ({ ...prev, dateFrom: date }))}
+                        onSelect={(date) => updateFilters({ dateFrom: date })}
                         initialFocus
                       />
                     </PopoverContent>
@@ -403,7 +408,7 @@ export default function Communications() {
                       <Calendar
                         mode="single"
                         selected={filters.dateTo}
-                        onSelect={(date) => setFilters(prev => ({ ...prev, dateTo: date }))}
+                        onSelect={(date) => updateFilters({ dateTo: date })}
                         initialFocus
                       />
                     </PopoverContent>
