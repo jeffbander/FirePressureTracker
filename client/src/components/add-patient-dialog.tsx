@@ -3,15 +3,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertPatientSchema } from "@shared/schema";
+import { calculateAge } from "@shared/date-utils";
 import { z } from "zod";
 
 // Form schema that handles string inputs and transforms them appropriately
 const formSchema = insertPatientSchema.extend({
-  age: z.string().min(1, "Age is required").transform((val) => parseInt(val, 10)),
-}).refine((data) => !isNaN(data.age) && data.age > 0, {
-  message: "Age must be a valid number greater than 0",
-  path: ["age"],
-});
+  dateOfBirth: z.string().min(1, "Date of birth is required"),
+  age: z.number().optional(), // Age will be auto-calculated
+}).transform((data) => ({
+  ...data,
+  age: calculateAge(data.dateOfBirth), // Auto-calculate age from DOB
+}));
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -50,9 +52,9 @@ export function AddPatientDialog({ open, onOpenChange }: AddPatientDialogProps) 
       employeeId: "",
       firstName: "",
       lastName: "",
+      dateOfBirth: "",
       department: "",
       union: "",
-      age: "",
       email: "",
       phone: "",
       emergencyContact: "",
@@ -203,13 +205,18 @@ export function AddPatientDialog({ open, onOpenChange }: AddPatientDialogProps) 
 
               <FormField
                 control={form.control}
-                name="age"
+                name="dateOfBirth"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Age</FormLabel>
+                    <FormLabel>Date of Birth</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="35" {...field} />
+                      <Input type="date" {...field} />
                     </FormControl>
+                    {field.value && (
+                      <p className="text-sm text-muted-foreground">
+                        Age: {calculateAge(field.value)} years
+                      </p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

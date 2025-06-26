@@ -714,6 +714,9 @@ export default function Patients() {
                               </h3>
                               <p className="text-sm text-gray-600">
                                 {patient.union} • ID: {patient.employeeId} • Age: {patient.age}
+                                {patient.dateOfBirth && (
+                                  <span> • DOB: {new Date(patient.dateOfBirth).toLocaleDateString()}</span>
+                                )}
                               </p>
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant="outline" className="text-xs">
@@ -782,7 +785,7 @@ export default function Patients() {
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>ID</TableHead>
-                      <TableHead>Age</TableHead>
+                      <TableHead>Age / DOB</TableHead>
                       <TableHead>Union</TableHead>
                       <TableHead>Department</TableHead>
                       <TableHead>Status</TableHead>
@@ -798,7 +801,16 @@ export default function Patients() {
                           {patient.firstName} {patient.lastName}
                         </TableCell>
                         <TableCell>{patient.employeeId}</TableCell>
-                        <TableCell>{patient.age}</TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div className="font-medium">{patient.age} years</div>
+                            {patient.dateOfBirth && (
+                              <div className="text-gray-500 text-xs">
+                                {new Date(patient.dateOfBirth).toLocaleDateString()}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>{patient.union}</TableCell>
                         <TableCell>{patient.department}</TableCell>
                         <TableCell>

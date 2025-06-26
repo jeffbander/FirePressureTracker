@@ -8,6 +8,7 @@ import {
 } from "@shared/schema";
 import { categorizeBP } from "@shared/bp-utils";
 import { triageHypertensionCase, getWorkflowTaskTitle, getWorkflowTaskDescription } from "@shared/hypertension-workflow";
+import { calculateAge } from "@shared/date-utils";
 
 export interface IStorage {
   // User operations
@@ -108,9 +109,10 @@ export class MemStorage implements IStorage {
         employeeId: 'FF-001',
         firstName: 'John',
         lastName: 'Rodriguez',
+        dateOfBirth: '1982-03-15',
         department: 'Engine Company',
         union: 'Union 15',
-        age: 42,
+        age: calculateAge('1982-03-15'),
         email: 'j.rodriguez@firestation.gov',
         phone: '(555) 123-4567',
         emergencyContact: '(555) 987-6543',
@@ -126,9 +128,10 @@ export class MemStorage implements IStorage {
         employeeId: 'FF-032',
         firstName: 'Sarah',
         lastName: 'Chen',
+        dateOfBirth: '1989-07-22',
         department: 'Ladder Company',
         union: 'Union 7',
-        age: 35,
+        age: calculateAge('1989-07-22'),
         email: 's.chen@firestation.gov',
         phone: '(555) 234-5678',
         emergencyContact: '(555) 876-5432',
@@ -144,9 +147,10 @@ export class MemStorage implements IStorage {
         employeeId: 'FF-018',
         firstName: 'Mike',
         lastName: 'Thompson',
+        dateOfBirth: '1986-12-08',
         department: 'Rescue Squad',
         union: 'Union 3',
-        age: 38,
+        age: calculateAge('1986-12-08'),
         email: 'm.thompson@firestation.gov',
         phone: '(555) 345-6789',
         emergencyContact: '(555) 765-4321',
@@ -162,9 +166,10 @@ export class MemStorage implements IStorage {
         employeeId: 'FF-045',
         firstName: 'Lisa',
         lastName: 'Garcia',
+        dateOfBirth: '1995-04-18',
         department: 'Paramedic Unit',
         union: 'Union 1',
-        age: 29,
+        age: calculateAge('1995-04-18'),
         email: 'l.garcia@firestation.gov',
         phone: '(555) 456-7890',
         emergencyContact: '(555) 654-3210',
@@ -583,9 +588,13 @@ export class MemStorage implements IStorage {
   }
 
   async createPatient(insertPatient: InsertPatient): Promise<Patient> {
+    // Calculate age from date of birth
+    const calculatedAge = calculateAge(insertPatient.dateOfBirth);
+    
     const patient: Patient = {
       ...insertPatient,
       id: this.currentId++,
+      age: calculatedAge, // Override age with calculated value
       email: insertPatient.email ?? null,
       phone: insertPatient.phone ?? null,
       emergencyContact: insertPatient.emergencyContact ?? null,

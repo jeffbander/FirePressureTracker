@@ -182,7 +182,12 @@ export default function PatientDetail() {
                         {getStatusLabel(latestReading.category)}
                       </span>
                     )}
-                    <span className="text-sm text-gray-600">Age: {patient.age} years</span>
+                    <span className="text-sm text-gray-600">
+                      {patient.dateOfBirth && (
+                        <>DOB: {new Date(patient.dateOfBirth).toLocaleDateString()} • </>
+                      )}
+                      Age: {patient.age} years
+                    </span>
                     {latestReading && (
                       <span className="text-sm text-gray-600">
                         Latest: {latestReading.systolic}/{latestReading.diastolic} mmHg
