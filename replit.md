@@ -119,6 +119,9 @@ Preferred communication style: Simple, everyday language.
 - June 26, 2025: Removed authentication requirement - direct access without login
 - June 26, 2025: Updated patient management to show both DOB and calculated age
 - June 26, 2025: Complete standalone deployment package created
+- June 26, 2025: Implemented webhook endpoint for external patient registration
+- June 26, 2025: Added patient approval workflow with status management
+- June 26, 2025: Created approvals interface for managing patient confirmations
 
 ## Changelog
 
