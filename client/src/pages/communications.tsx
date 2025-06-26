@@ -25,29 +25,41 @@ export default function Communications() {
     sortOrder: 'desc'
   });
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilters, setActiveFilters] = useState(filters);
   const [analyticsPeriod, setAnalyticsPeriod] = useState('30d');
 
-  // Build query string for API call with stable reference
+  // Build query string for API call using activeFilters only
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
     
-    if (filters.search) params.append('search', filters.search);
-    if (filters.type !== 'all') params.append('type', filters.type);
-    if (filters.outcome !== 'all') params.append('outcome', filters.outcome);
-    if (filters.userId !== 'all') params.append('userId', filters.userId);
-    if (filters.patientId !== 'all') params.append('patientId', filters.patientId);
-    if (filters.dateFrom) params.append('dateFrom', filters.dateFrom.toISOString());
-    if (filters.dateTo) params.append('dateTo', filters.dateTo.toISOString());
-    params.append('sortBy', filters.sortBy);
-    params.append('sortOrder', filters.sortOrder);
+    if (activeFilters.search) params.append('search', activeFilters.search);
+    if (activeFilters.type !== 'all') params.append('type', activeFilters.type);
+    if (activeFilters.outcome !== 'all') params.append('outcome', activeFilters.outcome);
+    if (activeFilters.userId !== 'all') params.append('userId', activeFilters.userId);
+    if (activeFilters.patientId !== 'all') params.append('patientId', activeFilters.patientId);
+    if (activeFilters.dateFrom) params.append('dateFrom', activeFilters.dateFrom.toISOString());
+    if (activeFilters.dateTo) params.append('dateTo', activeFilters.dateTo.toISOString());
+    params.append('sortBy', activeFilters.sortBy);
+    params.append('sortOrder', activeFilters.sortOrder);
     
     return params.toString();
-  }, [filters]);
+  }, [activeFilters]);
 
-  // Stable filter update function
+  // Filter update functions
   const updateFilters = useCallback((updates: Partial<typeof filters>) => {
     setFilters(prev => ({ ...prev, ...updates }));
   }, []);
+
+  const handleSearch = useCallback(() => {
+    setActiveFilters({ ...filters, search: searchQuery });
+  }, [filters, searchQuery]);
+
+  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  }, [handleSearch]);
 
   const { data: communications = [], isLoading } = useQuery({
     queryKey: ['/api/communications', queryParams],
@@ -106,7 +118,7 @@ export default function Communications() {
   };
 
   const clearFilters = useCallback(() => {
-    setFilters({
+    const defaultFilters = {
       search: '',
       type: 'all',
       outcome: 'all',
@@ -116,7 +128,10 @@ export default function Communications() {
       dateTo: undefined,
       sortBy: 'createdAt',
       sortOrder: 'desc'
-    });
+    };
+    setFilters(defaultFilters);
+    setSearchQuery('');
+    setActiveFilters(defaultFilters);
   }, []);
 
   if (isLoading) {
@@ -285,14 +300,20 @@ export default function Communications() {
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Search</label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Search messages, notes, patients..."
-                      value={filters.search}
-                      onChange={(e) => updateFilters({ search: e.target.value })}
-                      className="pl-10"
-                    />
+                  <div className="relative flex gap-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="Search messages, notes, patients..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        className="pl-10"
+                      />
+                    </div>
+                    <Button onClick={handleSearch} size="sm">
+                      <Search className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
 
@@ -416,9 +437,13 @@ export default function Communications() {
                 </div>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={clearFilters}>
                   Clear Filters
+                </Button>
+                <Button onClick={handleSearch}>
+                  <Search className="h-4 w-4 mr-2" />
+                  Search
                 </Button>
               </div>
             </CardContent>
