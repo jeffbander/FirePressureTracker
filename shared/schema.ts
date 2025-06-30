@@ -25,7 +25,7 @@ export const patients = pgTable("patients", {
   age: integer("age").notNull(),
   email: text("email"),
   phone: text("phone"),
-  emergencyContact: text("emergency_contact"),
+
   medications: text("medications"), // JSON string
   allergies: text("allergies"),
   lastCheckup: timestamp("last_checkup"),

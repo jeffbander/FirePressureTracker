@@ -176,7 +176,7 @@ export class MemStorage implements IStorage {
         age: calculateAge('1982-03-15'),
         email: 'j.rodriguez@firestation.gov',
         phone: '(555) 123-4567',
-        emergencyContact: '(555) 987-6543',
+
         medications: JSON.stringify(['Lisinopril 10mg daily', 'Amlodipine 5mg daily']),
         allergies: 'Penicillin',
         lastCheckup: new Date('2024-10-15'),
