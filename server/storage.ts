@@ -22,6 +22,7 @@ export interface IStorage {
   getPatientByEmployeeId(employeeId: string): Promise<Patient | undefined>;
   getAllPatients(): Promise<Patient[]>;
   getPendingPatients(): Promise<Patient[]>;
+  getPendingPatientsByUnion(union: string): Promise<Patient[]>;
   getPatientsByStatus(status: string): Promise<Patient[]>;
   searchPatients(query: string): Promise<Patient[]>;
   createPatient(patient: InsertPatient): Promise<Patient>;
@@ -76,6 +77,7 @@ export class MemStorage implements IStorage {
       role: 'admin',
       email: 'admin@firestation.gov',
       phone: '(555) 001-0001',
+      unionAffiliation: null,
       createdAt: new Date(),
     };
 
@@ -87,6 +89,7 @@ export class MemStorage implements IStorage {
       role: 'nurse',
       email: 'nurse@firestation.gov',
       phone: '(555) 002-0002',
+      unionAffiliation: null,
       createdAt: new Date(),
     };
 
@@ -98,12 +101,66 @@ export class MemStorage implements IStorage {
       role: 'coach',
       email: 'coach@firestation.gov',
       phone: '(555) 003-0003',
+      unionAffiliation: null,
+      createdAt: new Date(),
+    };
+
+    // Union Administrators
+    const union1Admin: User = {
+      id: this.currentId++,
+      username: 'union1_admin',
+      password: 'union123',
+      name: 'Union 1 Administrator',
+      role: 'union_admin',
+      email: 'admin@union1.org',
+      phone: '(555) 101-0001',
+      unionAffiliation: 'Union 1',
+      createdAt: new Date(),
+    };
+
+    const union2Admin: User = {
+      id: this.currentId++,
+      username: 'union2_admin',
+      password: 'union123',
+      name: 'Union 2 Administrator',
+      role: 'union_admin',
+      email: 'admin@union2.org',
+      phone: '(555) 102-0001',
+      unionAffiliation: 'Union 2',
+      createdAt: new Date(),
+    };
+
+    const union3Admin: User = {
+      id: this.currentId++,
+      username: 'union3_admin',
+      password: 'union123',
+      name: 'Union 3 Administrator',
+      role: 'union_admin',
+      email: 'admin@union3.org',
+      phone: '(555) 103-0001',
+      unionAffiliation: 'Union 3',
+      createdAt: new Date(),
+    };
+
+    const union4Admin: User = {
+      id: this.currentId++,
+      username: 'union4_admin',
+      password: 'union123',
+      name: 'Union 4 Administrator',
+      role: 'union_admin',
+      email: 'admin@union4.org',
+      phone: '(555) 104-0001',
+      unionAffiliation: 'Union 4',
       createdAt: new Date(),
     };
 
     this.users.set(adminUser.id, adminUser);
     this.users.set(nurseUser.id, nurseUser);
     this.users.set(coachUser.id, coachUser);
+    this.users.set(union1Admin.id, union1Admin);
+    this.users.set(union2Admin.id, union2Admin);
+    this.users.set(union3Admin.id, union3Admin);
+    this.users.set(union4Admin.id, union4Admin);
 
     // Create demo patients
     const patients = [
@@ -572,6 +629,7 @@ export class MemStorage implements IStorage {
       id: this.currentId++,
       email: insertUser.email ?? null,
       phone: insertUser.phone ?? null,
+      unionAffiliation: insertUser.unionAffiliation ?? null,
       createdAt: new Date(),
     };
     this.users.set(user.id, user);
@@ -630,6 +688,13 @@ export class MemStorage implements IStorage {
   async getPendingPatients(): Promise<Patient[]> {
     return Array.from(this.patients.values()).filter(patient => 
       patient.status === 'awaiting_confirmation' || patient.status === 'awaiting_cuff'
+    );
+  }
+
+  async getPendingPatientsByUnion(union: string): Promise<Patient[]> {
+    return Array.from(this.patients.values()).filter(patient => 
+      (patient.status === 'awaiting_confirmation' || patient.status === 'awaiting_cuff') &&
+      patient.union === union
     );
   }
 

@@ -7,9 +7,10 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   name: text("name").notNull(),
-  role: text("role").notNull(), // 'admin', 'nurse', 'coach'
+  role: text("role").notNull(), // 'admin', 'nurse', 'coach', 'union_admin'
   email: text("email"),
   phone: text("phone"),
+  unionAffiliation: text("union_affiliation"), // For union-specific users
   createdAt: timestamp("created_at").defaultNow(),
 });
 
