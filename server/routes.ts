@@ -388,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { newStatus, approvedBy } = req.body;
       
       // Validate status transition
-      const validStatuses = ['awaiting_confirmation', 'awaiting_cuff', 'active', 'out_of_program'];
+      const validStatuses = ['awaiting_confirmation', 'awaiting_cuff', 'awaiting_first_reading', 'active', 'inactive', 'out_of_program'];
       if (!validStatuses.includes(newStatus)) {
         return res.status(400).json({ message: "Invalid status" });
       }
