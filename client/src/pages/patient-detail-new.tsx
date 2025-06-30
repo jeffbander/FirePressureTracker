@@ -221,10 +221,7 @@ export default function PatientDetail() {
                   <label className="text-sm font-medium text-gray-500">Email</label>
                   <p className="text-gray-900">{patient.email || 'Not provided'}</p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Emergency Contact</label>
-                  <p className="text-gray-900">{patient.emergencyContact || 'Not provided'}</p>
-                </div>
+
               </CardContent>
             </Card>
 

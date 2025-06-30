@@ -311,10 +311,7 @@ export default function PatientDetail() {
                   <span className="text-gray-600">Email:</span>
                   <span className="text-sm">{patient.email || 'Not provided'}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Emergency:</span>
-                  <span>{patient.emergencyContact || 'Not provided'}</span>
-                </div>
+
                 <div className="mt-4 space-y-2">
                   <Button className="w-full">
                     <i className="fas fa-phone mr-2"></i>Call Patient

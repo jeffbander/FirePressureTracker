@@ -57,7 +57,7 @@ export function AddPatientDialog({ open, onOpenChange }: AddPatientDialogProps) 
       union: "",
       email: "",
       phone: "",
-      emergencyContact: "",
+
       medications: "",
       allergies: "",
     },
@@ -250,19 +250,7 @@ export function AddPatientDialog({ open, onOpenChange }: AddPatientDialogProps) 
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="emergencyContact"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Emergency Contact (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="(555) 987-6543" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
             </div>
 
             <FormField

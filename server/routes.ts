@@ -355,7 +355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         age: calculatedAge, // Calculate age automatically
         email: req.body.email || null,
         phone: req.body.phone || null,
-        emergencyContact: req.body.emergencyContact || null,
+
         allergies: req.body.allergies || null,
         medications: req.body.medications || null,
         status: 'awaiting_confirmation' // Always start with awaiting confirmation
