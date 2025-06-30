@@ -203,6 +203,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get pending patients by union
+  app.get("/api/patients/pending-by-union/:union", async (req, res) => {
+    try {
+      const union = req.params.union;
+      const pendingPatients = await storage.getPendingPatientsByUnion(union);
+      res.json(pendingPatients);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch pending patients for union" });
+    }
+  });
+
+  // Get all unions with pending patient counts
+  app.get("/api/unions/pending-summary", async (req, res) => {
+    try {
+      const allPendingPatients = await storage.getPendingPatients();
+      
+      // Group by union and count
+      const unionSummary = allPendingPatients.reduce((acc, patient) => {
+        const union = patient.union;
+        if (!acc[union]) {
+          acc[union] = {
+            union,
+            pendingCount: 0,
+            awaitingConfirmation: 0,
+            awaitingCuff: 0
+          };
+        }
+        acc[union].pendingCount++;
+        if (patient.status === 'awaiting_confirmation') {
+          acc[union].awaitingConfirmation++;
+        } else if (patient.status === 'awaiting_cuff') {
+          acc[union].awaitingCuff++;
+        }
+        return acc;
+      }, {} as Record<string, any>);
+
+      res.json(Object.values(unionSummary));
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch union summary" });
+    }
+  });
+
   // Get patients by status (must come before :id route)
   app.get("/api/patients/status/:status", async (req, res) => {
     try {

@@ -24,6 +24,7 @@ export interface IStorage {
   getPendingPatients(): Promise<Patient[]>;
   getPendingPatientsByUnion(union: string): Promise<Patient[]>;
   getPatientsByStatus(status: string): Promise<Patient[]>;
+  getInactivePatients(): Promise<Patient[]>;
   searchPatients(query: string): Promise<Patient[]>;
   createPatient(patient: InsertPatient): Promise<Patient>;
   updatePatient(id: number, updates: Partial<Patient>): Promise<Patient | undefined>;
@@ -693,9 +694,32 @@ export class MemStorage implements IStorage {
 
   async getPendingPatientsByUnion(union: string): Promise<Patient[]> {
     return Array.from(this.patients.values()).filter(patient => 
-      (patient.status === 'awaiting_confirmation' || patient.status === 'awaiting_cuff') &&
+      (patient.status === 'awaiting_confirmation' || patient.status === 'awaiting_cuff' || patient.status === 'awaiting_first_reading') &&
       patient.union === union
     );
+  }
+
+  async getInactivePatients(): Promise<Patient[]> {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    return Array.from(this.patients.values()).filter(patient => {
+      if (patient.status !== 'active') return false;
+      
+      // Get patient's latest BP reading
+      const patientReadings = Array.from(this.bpReadings.values())
+        .filter(reading => reading.patientId === patient.id)
+        .sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime());
+      
+      if (patientReadings.length === 0) {
+        // No readings at all - consider inactive if enrolled more than 6 months ago
+        return new Date(patient.createdAt) < sixMonthsAgo;
+      }
+      
+      // Has readings but last one was more than 6 months ago
+      const lastReading = patientReadings[0];
+      return new Date(lastReading.recordedAt) < sixMonthsAgo;
+    });
   }
 
   async getPatientsByStatus(status: string): Promise<Patient[]> {

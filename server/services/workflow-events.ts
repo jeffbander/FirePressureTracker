@@ -46,8 +46,14 @@ export class WorkflowEventService {
       case 'awaiting_cuff':
         await this.handleCuffApproval(patient, approvedBy);
         break;
+      case 'awaiting_first_reading':
+        await this.handleAwaitingFirstReading(patient, approvedBy);
+        break;
       case 'active':
         await this.handleActivation(patient, approvedBy);
+        break;
+      case 'inactive':
+        await this.handleInactiveStatus(patient, approvedBy);
         break;
       case 'out_of_program':
         await this.handleProgramExit(patient, approvedBy);

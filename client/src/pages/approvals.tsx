@@ -37,13 +37,29 @@ const STATUS_CONFIG = {
   }
 };
 
+interface UnionSummary {
+  union: string;
+  pendingCount: number;
+  awaitingConfirmation: number;
+  awaitingCuff: number;
+}
+
 export default function Approvals() {
   const [selectedStatus, setSelectedStatus] = useState("pending");
+  const [selectedUnion, setSelectedUnion] = useState<string | "all">("all");
   const queryClient = useQueryClient();
 
-  // Fetch pending patients
+  // Fetch union summary for admin view
+  const { data: unionSummary = [], isLoading: isUnionSummaryLoading } = useQuery<UnionSummary[]>({
+    queryKey: ['/api/unions/pending-summary'],
+    enabled: selectedStatus === "pending"
+  });
+
+  // Fetch pending patients (all or by union)
   const { data: pendingPatients = [], isLoading: isPendingLoading } = useQuery<Patient[]>({
-    queryKey: ['/api/patients/pending'],
+    queryKey: selectedUnion === "all" 
+      ? ['/api/patients/pending'] 
+      : ['/api/patients/pending-by-union', selectedUnion],
     enabled: selectedStatus === "pending"
   });
 
