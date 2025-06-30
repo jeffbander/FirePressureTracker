@@ -424,8 +424,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validated = insertBpReadingSchema.parse(req.body);
       const reading = await storage.createBpReading(validated);
+      
+      // Check if this is the patient's first reading and auto-activate if awaiting first reading
+      const patient = await storage.getPatient(validated.patientId);
+      if (patient && patient.status === 'awaiting_first_reading') {
+        const existingReadings = await storage.getBpReadingsByPatient(validated.patientId);
+        if (existingReadings.length === 1) { // This is their first reading
+          // Auto-activate the patient
+          const activatedPatient = await storage.approvePatient(patient.id, 1, 'active');
+          if (activatedPatient) {
+            // Trigger activation workflow events
+            const adminUser = await storage.getUser(1);
+            await workflowEventService.processStatusChange(activatedPatient, 'awaiting_first_reading', adminUser);
+            console.log(`[Auto-Activation] Patient ${patient.employeeId} activated after first BP reading`);
+          }
+        }
+      }
+      
       res.status(201).json(reading);
     } catch (error) {
+      console.error('BP reading creation error:', error);
       res.status(400).json({ message: "Invalid reading data" });
     }
   });
