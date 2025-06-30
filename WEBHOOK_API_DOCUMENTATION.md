@@ -245,7 +245,7 @@ register_patient(patient_data)
 ### Optional Fields
 - `email`: Valid email format if provided
 - `phone`: Phone number in any format
-- `emergencyContact`: Contact information
+
 - `allergies`: Free text field
 - `medications`: Free text field
 
