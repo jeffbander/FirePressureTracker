@@ -313,11 +313,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create patient
   app.post("/api/patients", async (req, res) => {
     try {
-      const validated = insertPatientSchema.parse(req.body);
+      // Calculate age from date of birth automatically
+      const calculatedAge = calculateAge(req.body.dateOfBirth);
+      
+      const patientData = {
+        ...req.body,
+        age: calculatedAge, // Calculate age automatically
+        status: 'awaiting_confirmation' // Always start with awaiting confirmation
+      };
+      
+      const validated = insertPatientSchema.parse(patientData);
       const patient = await storage.createPatient(validated);
       res.status(201).json(patient);
     } catch (error) {
-      res.status(400).json({ message: "Invalid patient data" });
+      console.error('Patient creation error:', error);
+      res.status(400).json({ message: "Invalid patient data", error: error instanceof Error ? error.message : "Unknown error" });
     }
   });
 

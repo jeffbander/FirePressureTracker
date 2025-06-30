@@ -36,7 +36,7 @@ Content-Type: application/json
   "union": "Union 3",               // Required: Union affiliation
   "email": "j.smith@fire.gov",      // Optional: Email address
   "phone": "(555) 123-4567",        // Optional: Phone number
-  "emergencyContact": "(555) 987-6543", // Optional: Emergency contact
+
   "allergies": "Penicillin",        // Optional: Known allergies
   "medications": "Lisinopril 10mg"  // Optional: Current medications
 }
@@ -58,7 +58,7 @@ Content-Type: application/json
     "age": 39,                     // Automatically calculated
     "email": "j.smith@fire.gov",
     "phone": "(555) 123-4567",
-    "emergencyContact": "(555) 987-6543",
+
     "allergies": "Penicillin",
     "medications": "Lisinopril 10mg",
     "status": "awaiting_confirmation",
@@ -160,7 +160,7 @@ curl -X POST http://your-server.com/api/webhook/patients \
     "union": "Union 5",
     "email": "j.doe@fire.gov",
     "phone": "(555) 555-0123",
-    "emergencyContact": "(555) 555-9876",
+
     "allergies": "None known"
   }'
 ```
