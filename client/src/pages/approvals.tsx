@@ -23,11 +23,23 @@ const STATUS_CONFIG = {
     color: "bg-blue-100 text-blue-800 border-blue-200",
     description: "Patient approved, waiting for BP cuff"
   },
+  awaiting_first_reading: {
+    label: "Awaiting First Reading",
+    icon: Clock,
+    color: "bg-purple-100 text-purple-800 border-purple-200",
+    description: "Cuff delivered, waiting for first BP reading"
+  },
   active: {
     label: "Active",
     icon: CheckCircle,
     color: "bg-green-100 text-green-800 border-green-200",
     description: "Fully enrolled in program"
+  },
+  inactive: {
+    label: "Inactive",
+    icon: AlertCircle,
+    color: "bg-orange-100 text-orange-800 border-orange-200",
+    description: "No BP reading in 6+ months"
   },
   out_of_program: {
     label: "Out of Program",
@@ -66,7 +78,13 @@ export default function Approvals() {
   // Fetch patients by status
   const { data: statusPatients = [], isLoading: isStatusLoading } = useQuery<Patient[]>({
     queryKey: ['/api/patients/status', selectedStatus],
-    enabled: selectedStatus !== "pending"
+    enabled: selectedStatus !== "pending" && selectedStatus !== "inactive"
+  });
+
+  // Fetch inactive patients
+  const { data: inactivePatients = [], isLoading: isInactiveLoading } = useQuery<Patient[]>({
+    queryKey: ['/api/patients/inactive'],
+    enabled: selectedStatus === "inactive"
   });
 
   // Approve patient mutation

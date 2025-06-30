@@ -129,6 +129,56 @@ export class WorkflowEventService {
   }
 
   /**
+   * Handle patient awaiting first reading - send setup instructions
+   */
+  private async handleAwaitingFirstReading(patient: Patient, approvedBy?: User): Promise<void> {
+    if (patient.email) {
+      const setupEmail: EmailNotification = {
+        to: patient.email,
+        subject: `BP Monitoring Setup Complete - First Reading Required`,
+        body: this.generateFirstReadingInstructions(patient),
+        patientData: {
+          name: `${patient.firstName} ${patient.lastName}`,
+          employeeId: patient.employeeId,
+          department: patient.department,
+          union: patient.union,
+          email: patient.email,
+          phone: patient.phone || undefined,
+          allergies: patient.allergies || undefined
+        }
+      };
+
+      await this.sendEmailNotification(setupEmail);
+      console.log(`[Email] First reading instructions sent to ${patient.email} for patient ${patient.employeeId}`);
+    }
+  }
+
+  /**
+   * Handle patient marked as inactive - send reactivation reminder
+   */
+  private async handleInactiveStatus(patient: Patient, approvedBy?: User): Promise<void> {
+    if (patient.email) {
+      const reactivationEmail: EmailNotification = {
+        to: patient.email,
+        subject: `BP Monitoring Reminder - Please Take Your Next Reading`,
+        body: this.generateReactivationReminder(patient),
+        patientData: {
+          name: `${patient.firstName} ${patient.lastName}`,
+          employeeId: patient.employeeId,
+          department: patient.department,
+          union: patient.union,
+          email: patient.email,
+          phone: patient.phone || undefined,
+          allergies: patient.allergies || undefined
+        }
+      };
+
+      await this.sendEmailNotification(reactivationEmail);
+      console.log(`[Email] Reactivation reminder sent to ${patient.email} for patient ${patient.employeeId}`);
+    }
+  }
+
+  /**
    * Handle patient exiting program - send notification to relevant parties
    */
   private async handleProgramExit(patient: Patient, approvedBy?: User): Promise<void> {
@@ -242,6 +292,74 @@ ACTIVATION DATE: ${new Date().toLocaleDateString()}
 The patient should now have access to all monitoring features and will begin receiving health alerts and notifications.
 
 Fire Department BP Management System
+    `.trim();
+  }
+
+  /**
+   * Generate setup instructions for first BP reading
+   */
+  private generateFirstReadingInstructions(patient: Patient): string {
+    return `
+Dear ${patient.firstName} ${patient.lastName},
+
+Your BP monitoring equipment has been delivered and is ready to use! 
+
+NEXT STEPS:
+1. Set up your blood pressure cuff according to the included instructions
+2. Download the Fire Department BP app (if not already installed)
+3. Take your first blood pressure reading to activate your account
+4. Submit the reading through the app or call your health coordinator
+
+IMPORTANT:
+- Take your first reading within the next 7 days to complete your enrollment
+- Once your first reading is recorded, you'll be fully active in the program
+- You'll receive regular monitoring schedules and health alerts
+
+SUPPORT:
+If you need help setting up your equipment or have questions, contact:
+- Your Department Health Coordinator
+- Technical Support: (555) 123-HELP
+- Email: support@firestation.gov
+
+Thank you for participating in the Fire Department Blood Pressure Monitoring Program!
+
+Employee ID: ${patient.employeeId}
+Department: ${patient.department}
+Setup Date: ${new Date().toLocaleDateString()}
+    `.trim();
+  }
+
+  /**
+   * Generate reactivation reminder for inactive patients
+   */
+  private generateReactivationReminder(patient: Patient): string {
+    return `
+Dear ${patient.firstName} ${patient.lastName},
+
+We noticed you haven't taken a blood pressure reading in over 6 months. Your health and safety are important to us!
+
+PLEASE TAKE ACTION:
+- Take a blood pressure reading today using your monitoring equipment
+- Submit the reading through the Fire Department BP app
+- Contact your health coordinator if you need assistance
+
+BENEFITS OF REGULAR MONITORING:
+- Early detection of health issues
+- Personalized health coaching
+- Integration with department wellness programs
+- Better overall health outcomes
+
+NEED HELP?
+If your equipment needs replacement or you're having technical issues:
+- Contact your Department Health Coordinator
+- Technical Support: (555) 123-HELP
+- Email: support@firestation.gov
+
+Your participation in the BP monitoring program helps keep you healthy and ready to serve our community.
+
+Employee ID: ${patient.employeeId}
+Department: ${patient.department}
+Reminder Date: ${new Date().toLocaleDateString()}
     `.trim();
   }
 

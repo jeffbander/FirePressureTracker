@@ -709,16 +709,20 @@ export class MemStorage implements IStorage {
       // Get patient's latest BP reading
       const patientReadings = Array.from(this.bpReadings.values())
         .filter(reading => reading.patientId === patient.id)
-        .sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime());
+        .sort((a, b) => {
+          const dateA = a.recordedAt ? new Date(a.recordedAt).getTime() : 0;
+          const dateB = b.recordedAt ? new Date(b.recordedAt).getTime() : 0;
+          return dateB - dateA;
+        });
       
       if (patientReadings.length === 0) {
         // No readings at all - consider inactive if enrolled more than 6 months ago
-        return new Date(patient.createdAt) < sixMonthsAgo;
+        return patient.createdAt && new Date(patient.createdAt) < sixMonthsAgo;
       }
       
       // Has readings but last one was more than 6 months ago
       const lastReading = patientReadings[0];
-      return new Date(lastReading.recordedAt) < sixMonthsAgo;
+      return lastReading.recordedAt && new Date(lastReading.recordedAt) < sixMonthsAgo;
     });
   }
 

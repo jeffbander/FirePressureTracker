@@ -245,6 +245,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get inactive patients (no BP reading in 6+ months)
+  app.get("/api/patients/inactive", async (req, res) => {
+    try {
+      const inactivePatients = await storage.getInactivePatients();
+      res.json(inactivePatients);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch inactive patients" });
+    }
+  });
+
+  // Send reminder to inactive patient
+  app.post("/api/patients/:id/send-reminder", async (req, res) => {
+    try {
+      const patientId = parseInt(req.params.id);
+      const patient = await storage.getPatient(patientId);
+      
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      // Use workflow event service to send reactivation reminder
+      await workflowEventService.processStatusChange(patient, patient.status);
+
+      res.json({ message: "Reminder sent successfully" });
+    } catch (error) {
+      console.error('Send reminder error:', error);
+      res.status(500).json({ message: "Failed to send reminder" });
+    }
+  });
+
   // Get patients by status (must come before :id route)
   app.get("/api/patients/status/:status", async (req, res) => {
     try {
