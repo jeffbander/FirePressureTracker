@@ -1,162 +1,359 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/header";
-import { IndividualBPChart } from "@/components/individual-bp-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { TrendingUp, TrendingDown, Users, Calendar, Building2, AlertTriangle } from "lucide-react";
+
+type GroupingType = 'union' | 'department' | 'age_group' | 'status' | 'intervention_type';
+type TimeRange = '30d' | '90d' | '6m' | '1y';
 
 export default function BPTrends() {
+  const [groupBy, setGroupBy] = useState<GroupingType>('union');
+  const [timeRange, setTimeRange] = useState<TimeRange>('90d');
+  
   const { data: patients, isLoading } = useQuery({
     queryKey: ['/api/patients'],
   });
 
-  const getStatusColor = (category: string) => {
-    switch (category) {
-      case 'stage2':
-        return 'destructive';
-      case 'stage1':
-        return 'secondary';
-      case 'elevated':
-        return 'outline';
-      case 'low':
-        return 'outline';
-      case 'normal':
-        return 'default';
-      default:
-        return 'outline';
-    }
-  };
+  const { data: readings, isLoading: readingsLoading } = useQuery({
+    queryKey: ['/api/readings/recent', 1000],
+  });
 
-  const getStatusLabel = (category: string) => {
-    switch (category) {
-      case 'stage2':
-        return 'Critical';
-      case 'stage1':
-        return 'Stage 1';
-      case 'elevated':
-        return 'Elevated';
-      case 'low':
-        return 'Low BP';
-      case 'normal':
-        return 'Normal';
-      default:
-        return 'Unknown';
-    }
-  };
-
-  if (isLoading) {
+  if (isLoading || readingsLoading) {
     return (
       <div className="flex-1 ml-64">
         <Header 
-          title="Blood Pressure Trends" 
-          subtitle="Individual BP trend analysis for all firefighters"
+          title="BP Trends & Intervention Analytics" 
+          subtitle="Loading intervention analytics..." 
         />
-        <main className="p-8">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i}>
-                <CardContent className="p-6">
-                  <div className="h-64 bg-gray-200 rounded animate-pulse"></div>
-                </CardContent>
-              </Card>
-            ))}
+        <div className="p-6">
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
 
+  // Helper functions for data processing
+  const processDataByGroup = () => {
+    if (!readings || !patients || !Array.isArray(readings) || !Array.isArray(patients)) return {};
+    
+    const grouped: Record<string, any[]> = {};
+    
+    readings.forEach((reading: any) => {
+      const patient = patients.find((p: any) => p.id === reading.patientId);
+      if (!patient) return;
+      
+      let groupKey = '';
+      switch (groupBy) {
+        case 'union':
+          groupKey = patient.union || 'Unknown Union';
+          break;
+        case 'department':
+          groupKey = patient.department || 'Unknown Department';
+          break;
+        case 'age_group':
+          const age = patient.age || 0;
+          if (age < 30) groupKey = 'Under 30';
+          else if (age < 40) groupKey = '30-39';
+          else if (age < 50) groupKey = '40-49';
+          else groupKey = '50+';
+          break;
+        case 'status':
+          groupKey = patient.status || 'Unknown Status';
+          break;
+        case 'intervention_type':
+          // Determine intervention type based on BP category
+          if (reading.category === 'stage2') groupKey = 'High-Risk Intervention';
+          else if (reading.category === 'stage1') groupKey = 'Medium-Risk Intervention';
+          else if (reading.category === 'elevated') groupKey = 'Lifestyle Intervention';
+          else groupKey = 'Monitoring Only';
+          break;
+      }
+      
+      if (!grouped[groupKey]) grouped[groupKey] = [];
+      grouped[groupKey].push({ ...reading, patient });
+    });
+    
+    return grouped;
+  };
+
+  const calculateGroupStats = (groupData: any[]) => {
+    if (!groupData.length) return null;
+    
+    const avgSystolic = groupData.reduce((sum, r) => sum + r.systolic, 0) / groupData.length;
+    const avgDiastolic = groupData.reduce((sum, r) => sum + r.diastolic, 0) / groupData.length;
+    const abnormalCount = groupData.filter(r => r.isAbnormal).length;
+    const totalReadings = groupData.length;
+    const uniquePatients = new Set(groupData.map(r => r.patientId)).size;
+    
+    return {
+      avgSystolic: Math.round(avgSystolic),
+      avgDiastolic: Math.round(avgDiastolic),
+      abnormalRate: Math.round((abnormalCount / totalReadings) * 100),
+      totalReadings,
+      uniquePatients,
+      trend: calculateTrend(groupData)
+    };
+  };
+
+  const calculateTrend = (data: any[]) => {
+    if (data.length < 2) return 0;
+    
+    // Sort by date and calculate trend
+    const sortedData = data.sort((a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime());
+    const firstHalf = sortedData.slice(0, Math.floor(sortedData.length / 2));
+    const secondHalf = sortedData.slice(Math.floor(sortedData.length / 2));
+    
+    const firstAvg = firstHalf.reduce((sum, r) => sum + r.systolic, 0) / firstHalf.length;
+    const secondAvg = secondHalf.reduce((sum, r) => sum + r.systolic, 0) / secondHalf.length;
+    
+    return secondAvg - firstAvg;
+  };
+
+  const groupedData = processDataByGroup();
+  const groupNames = Object.keys(groupedData);
+
+  const prepareTrendChartData = () => {
+    const timePoints: Record<string, Record<string, number[]>> = {};
+    
+    // Group readings by date and group
+    Object.entries(groupedData).forEach(([groupName, readings]) => {
+      readings.forEach((reading: any) => {
+        const date = new Date(reading.recordedAt).toISOString().split('T')[0];
+        if (!timePoints[date]) timePoints[date] = {};
+        if (!timePoints[date][groupName]) timePoints[date][groupName] = [];
+        timePoints[date][groupName].push(reading.systolic);
+      });
+    });
+
+    // Calculate averages for each time point
+    return Object.entries(timePoints)
+      .map(([date, groups]) => {
+        const dataPoint: any = { date };
+        Object.entries(groups).forEach(([groupName, values]) => {
+          dataPoint[groupName] = Math.round(values.reduce((sum, v) => sum + v, 0) / values.length);
+        });
+        return dataPoint;
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(-30); // Last 30 data points
+  };
+
+  const trendChartData = prepareTrendChartData();
+  const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4'];
+
   return (
     <div className="flex-1 ml-64">
       <Header 
-        title="Blood Pressure Trends" 
-        subtitle="Individual BP trend analysis for all firefighters"
+        title="BP Trends & Intervention Analytics" 
+        subtitle="Compare blood pressure trends across patient groups to evaluate intervention effectiveness" 
       />
-      
-      <main className="p-8">
-        <div className="mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                This page shows individual blood pressure trend charts for each firefighter. 
-                Each chart displays the last 10 readings with systolic and diastolic values over time.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="destructive">Critical (Stage 2)</Badge>
-                <Badge variant="secondary">Stage 1 Hypertension</Badge>
-                <Badge variant="outline">Elevated/Low BP</Badge>
-                <Badge variant="default">Normal</Badge>
+      <div className="p-6 space-y-6">
+        {/* Controls */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Analytics Configuration
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="text-sm font-medium mb-2 block">Group By</label>
+                <Select value={groupBy} onValueChange={(value: GroupingType) => setGroupBy(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="union">Union</SelectItem>
+                    <SelectItem value="department">Department</SelectItem>
+                    <SelectItem value="age_group">Age Group</SelectItem>
+                    <SelectItem value="status">Patient Status</SelectItem>
+                    <SelectItem value="intervention_type">Intervention Type</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {patients?.map((patient: any) => (
-            <div key={patient.id} className="space-y-4">
-              {/* Patient Info Card */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-primary bg-opacity-10 rounded-full flex items-center justify-center">
-                        <span className="text-primary font-medium text-sm">
-                          {patient.firstName?.[0]}{patient.lastName?.[0]}
-                        </span>
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">
-                          {patient.firstName} {patient.lastName}
-                        </CardTitle>
-                        <p className="text-sm text-gray-600">
-                          {patient.department} • {patient.union} • ID: {patient.employeeId}
-                        </p>
-                      </div>
-                    </div>
-                    {patient.latestReading && (
-                      <Badge variant={getStatusColor(patient.latestReading.category)}>
-                        {getStatusLabel(patient.latestReading.category)}
-                      </Badge>
-                    )}
-                  </div>
-                  {patient.latestReading && (
-                    <div className="flex items-center space-x-4 text-sm text-gray-600 mt-2">
-                      <span>
-                        Latest: {patient.latestReading.systolic}/{patient.latestReading.diastolic} mmHg
-                      </span>
-                      <span>
-                        {new Date(patient.latestReading.recordedAt).toLocaleDateString()}
-                      </span>
-                      {patient.latestReading.heartRate && (
-                        <span>
-                          HR: {patient.latestReading.heartRate} bpm
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </CardHeader>
-              </Card>
-
-              {/* Individual BP Chart */}
-              <IndividualBPChart
-                patientName={`${patient.firstName} ${patient.lastName}`}
-                readings={patient.readings || []}
-                height="h-80"
-              />
+              <div className="flex-1">
+                <label className="text-sm font-medium mb-2 block">Time Range</label>
+                <Select value={timeRange} onValueChange={(value: TimeRange) => setTimeRange(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30d">Last 30 Days</SelectItem>
+                    <SelectItem value="90d">Last 90 Days</SelectItem>
+                    <SelectItem value="6m">Last 6 Months</SelectItem>
+                    <SelectItem value="1y">Last Year</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          ))}
-        </div>
+          </CardContent>
+        </Card>
 
-        {(!patients || patients.length === 0) && (
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <p className="text-gray-500">No patient data available</p>
-            </CardContent>
-          </Card>
-        )}
-      </main>
+        <Tabs defaultValue="trends" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="trends">Trend Comparison</TabsTrigger>
+            <TabsTrigger value="stats">Group Statistics</TabsTrigger>
+            <TabsTrigger value="effectiveness">Intervention Effectiveness</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="trends" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>BP Trends by {groupBy.replace('_', ' ').toUpperCase()}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-96">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={trendChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis domain={[100, 180]} />
+                      <Tooltip />
+                      <Legend />
+                      {groupNames.map((groupName, index) => (
+                        <Line
+                          key={groupName}
+                          type="monotone"
+                          dataKey={groupName}
+                          stroke={colors[index % colors.length]}
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="stats" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Object.entries(groupedData).map(([groupName, data]) => {
+                const stats = calculateGroupStats(data);
+                if (!stats) return null;
+
+                return (
+                  <Card key={groupName}>
+                    <CardHeader>
+                      <CardTitle className="text-lg">{groupName}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        <span className="text-sm text-gray-600">
+                          {stats.uniquePatients} patients • {stats.totalReadings} readings
+                        </span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-2xl font-bold text-blue-600">
+                            {stats.avgSystolic}
+                          </div>
+                          <div className="text-sm text-gray-600">Avg Systolic</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-green-600">
+                            {stats.avgDiastolic}
+                          </div>
+                          <div className="text-sm text-gray-600">Avg Diastolic</div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Abnormal Rate:</span>
+                        <Badge variant={stats.abnormalRate > 50 ? "destructive" : stats.abnormalRate > 25 ? "secondary" : "default"}>
+                          {stats.abnormalRate}%
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Trend:</span>
+                        <div className="flex items-center gap-1">
+                          {stats.trend > 0 ? (
+                            <TrendingUp className="h-4 w-4 text-red-500" />
+                          ) : (
+                            <TrendingDown className="h-4 w-4 text-green-500" />
+                          )}
+                          <span className={`text-sm font-medium ${stats.trend > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                            {Math.abs(Math.round(stats.trend))} mmHg
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="effectiveness" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  Intervention Effectiveness Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {Object.entries(groupedData).map(([groupName, data]) => {
+                    const stats = calculateGroupStats(data);
+                    if (!stats) return null;
+
+                    const effectivenessScore = Math.max(0, 100 - stats.abnormalRate - Math.abs(stats.trend));
+                    const effectivenessLevel = effectivenessScore > 80 ? 'Excellent' : 
+                                            effectivenessScore > 60 ? 'Good' : 
+                                            effectivenessScore > 40 ? 'Fair' : 'Needs Improvement';
+
+                    return (
+                      <div key={groupName} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-medium">{groupName}</h3>
+                          <Badge variant={effectivenessScore > 60 ? "default" : "destructive"}>
+                            {effectivenessLevel}
+                          </Badge>
+                        </div>
+                        <div className="grid grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <div className="text-gray-600">Effectiveness Score</div>
+                            <div className="font-medium">{Math.round(effectivenessScore)}%</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-600">BP Control</div>
+                            <div className={`font-medium ${stats.abnormalRate < 25 ? 'text-green-600' : 'text-red-600'}`}>
+                              {100 - stats.abnormalRate}%
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-gray-600">Trend Direction</div>
+                            <div className={`font-medium ${stats.trend <= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {stats.trend <= 0 ? 'Improving' : 'Worsening'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-gray-600">Patients</div>
+                            <div className="font-medium">{stats.uniquePatients}</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

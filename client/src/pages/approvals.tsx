@@ -136,50 +136,31 @@ export default function Approvals() {
               {patient.firstName} {patient.lastName}
             </CardTitle>
             <CardDescription>
-              Employee ID: {patient.employeeId} • {patient.department}
+              DOB: {patient.dateOfBirth ? formatDate(patient.dateOfBirth) : 'N/A'}
             </CardDescription>
           </div>
           {getStatusBadge(patient.status)}
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="space-y-2">
-            <div className="flex items-center text-sm text-gray-600">
-              <User className="h-4 w-4 mr-2" />
-              Age: {patient.age} • DOB: {patient.dateOfBirth ? formatDate(patient.dateOfBirth) : 'N/A'}
-            </div>
-            {patient.phone && (
-              <div className="flex items-center text-sm text-gray-600">
-                <Phone className="h-4 w-4 mr-2" />
-                {patient.phone}
-              </div>
-            )}
-            {patient.email && (
-              <div className="flex items-center text-sm text-gray-600">
-                <Mail className="h-4 w-4 mr-2" />
-                {patient.email}
-              </div>
-            )}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="space-y-1">
+            <div className="text-sm font-medium text-gray-700">Union</div>
+            <div className="text-sm">{patient.union}</div>
           </div>
-          <div className="space-y-2">
-            <div className="text-sm">
-              <span className="font-medium">Union:</span> {patient.union}
-            </div>
-
-            <div className="flex items-center text-sm text-gray-600">
-              <Calendar className="h-4 w-4 mr-2" />
-              Registered: {patient.createdAt ? formatDate(patient.createdAt) : 'N/A'}
-            </div>
+          <div className="space-y-1">
+            <div className="text-sm font-medium text-gray-700">Phone</div>
+            <div className="text-sm">{patient.phone || 'Not provided'}</div>
+          </div>
+          <div className="space-y-1">
+            <div className="text-sm font-medium text-gray-700">Email</div>
+            <div className="text-sm">{patient.email || 'Not provided'}</div>
           </div>
         </div>
-
-        {patient.allergies && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <span className="font-medium text-red-800">Allergies:</span>
-            <span className="text-red-700 ml-2">{patient.allergies}</span>
-          </div>
-        )}
+        <div className="text-xs text-gray-500 mb-4">
+          <Calendar className="h-3 w-3 inline mr-1" />
+          Registered: {patient.createdAt ? formatDate(patient.createdAt) : 'N/A'}
+        </div>
 
         {selectedStatus === "pending" && (
           <div className="space-y-3 pt-4 border-t">
