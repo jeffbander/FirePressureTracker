@@ -125,6 +125,10 @@ Preferred communication style: Simple, everyday language.
 - June 26, 2025: Implemented automated workflow events system with email notifications
 - June 26, 2025: Added automated cuff request emails to sbzakow@mswheart.com
 - June 26, 2025: Created welcome email system for newly activated patients
+- June 30, 2025: Enhanced approval workflow with union-based segregation and admin oversight
+- June 30, 2025: Added new patient statuses: awaiting_first_reading, inactive
+- June 30, 2025: Implemented automated status transitions and inactive patient monitoring
+- June 30, 2025: Created union-specific approval interfaces with pending counts by union
 
 ## Changelog
 
