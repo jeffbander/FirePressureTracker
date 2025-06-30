@@ -220,7 +220,7 @@ Age: ${patient.age}
 CONTACT INFORMATION:
 Email: ${patient.email || 'Not provided'}
 Phone: ${patient.phone || 'Not provided'}
-Emergency Contact: ${patient.emergencyContact || 'Not provided'}
+
 
 MEDICAL INFORMATION:
 Allergies: ${patient.allergies || 'None reported'}

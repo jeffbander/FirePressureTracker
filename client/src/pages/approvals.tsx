@@ -166,11 +166,7 @@ export default function Approvals() {
             <div className="text-sm">
               <span className="font-medium">Union:</span> {patient.union}
             </div>
-            {patient.emergencyContact && (
-              <div className="text-sm">
-                <span className="font-medium">Emergency Contact:</span> {patient.emergencyContact}
-              </div>
-            )}
+
             <div className="flex items-center text-sm text-gray-600">
               <Calendar className="h-4 w-4 mr-2" />
               Registered: {patient.createdAt ? formatDate(patient.createdAt) : 'N/A'}

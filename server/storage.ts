@@ -198,7 +198,7 @@ export class MemStorage implements IStorage {
         age: calculateAge('1989-07-22'),
         email: 's.chen@firestation.gov',
         phone: '(555) 234-5678',
-        emergencyContact: '(555) 876-5432',
+
         medications: JSON.stringify(['Metoprolol 25mg twice daily']),
         allergies: 'None known',
         lastCheckup: new Date('2024-11-01'),
@@ -220,7 +220,7 @@ export class MemStorage implements IStorage {
         age: calculateAge('1986-12-08'),
         email: 'm.thompson@firestation.gov',
         phone: '(555) 345-6789',
-        emergencyContact: '(555) 765-4321',
+
         medications: JSON.stringify([]),
         allergies: 'Shellfish',
         lastCheckup: new Date('2024-09-20'),
@@ -242,7 +242,7 @@ export class MemStorage implements IStorage {
         age: calculateAge('1995-04-18'),
         email: 'l.garcia@firestation.gov',
         phone: '(555) 456-7890',
-        emergencyContact: '(555) 654-3210',
+
         medications: JSON.stringify([]),
         allergies: 'None known',
         lastCheckup: new Date('2024-11-10'),
@@ -671,7 +671,7 @@ export class MemStorage implements IStorage {
       age: calculatedAge, // Override age with calculated value
       email: insertPatient.email ?? null,
       phone: insertPatient.phone ?? null,
-      emergencyContact: insertPatient.emergencyContact ?? null,
+
       medications: insertPatient.medications ?? null,
       allergies: insertPatient.allergies ?? null,
       lastCheckup: insertPatient.lastCheckup ?? null,
