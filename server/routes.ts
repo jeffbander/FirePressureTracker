@@ -894,50 +894,141 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Union transformation demo endpoint
-  app.get("/api/union-system/demo", async (req, res) => {
-    try {
-      const members = await storage.getAllMembers ? await storage.getAllMembers() : [];
-      const membersByUnion = {
-        UFA: members.filter((m: any) => m.union === 'UFA'),
-        'Mount Sinai': members.filter((m: any) => m.union === 'Mount Sinai'),
-        LBA: members.filter((m: any) => m.union === 'LBA'),
-        UFOA: members.filter((m: any) => m.union === 'UFOA')
-      };
-
-      res.json({
-        systemType: "Union-Based Hypertension Program",
-        transformation: "COMPLETE",
-        totalMembers: members.length,
-        unionBreakdown: {
-          UFA: membersByUnion.UFA.length,
-          'Mount Sinai': membersByUnion['Mount Sinai'].length,
-          LBA: membersByUnion.LBA.length,
-          UFOA: membersByUnion.UFOA.length
+  // Complete feature demonstration endpoint
+  app.get("/api/system/features", async (req, res) => {
+    res.json({
+      systemName: "Union-Based Hypertension Program",
+      transformation: "✅ COMPLETE - Fire Department → Union Health Management",
+      
+      // Core Features Overview
+      keyFeatures: {
+        "1. Union-Based Member Management": {
+          description: "Complete member profiles with union-specific routing",
+          unions: ["UFA", "Mount Sinai", "LBA", "UFOA"],
+          capabilities: [
+            "Mobile app registration with union detection",
+            "Union admin verification workflow", 
+            "Comprehensive medical/lifestyle assessments",
+            "Emergency contact management",
+            "Multi-status tracking (active, pending, inactive)"
+          ]
         },
-        newFeatures: [
-          "AI-Powered Clinical Triage",
-          "Intelligent Fulfillment Routing",
-          "Advanced Communication Management",
-          "Union-Specific Analytics",
-          "Two-Way Messaging System"
+        
+        "2. AI-Powered Clinical Triage": {
+          description: "Advanced cardiovascular risk assessment and intervention routing",
+          aiCapabilities: [
+            "Real-time BP analysis and categorization",
+            "Multi-factor risk scoring (age, history, lifestyle)",
+            "Automated coach vs nurse practitioner assignment",
+            "Historical trend analysis and escalation alerts",
+            "Symptom correlation and priority scoring"
+          ]
+        },
+        
+        "3. Intelligent Fulfillment System": {
+          description: "Union-specific automated cuff delivery routing",
+          routingLogic: {
+            "UFA": "→ ShipNYC (automated fulfillment)",
+            "Mount Sinai": "→ ShipNYC (automated fulfillment)",
+            "LBA": "→ Union inventory (manual processing)",
+            "UFOA": "→ Union inventory (manual processing)"
+          },
+          features: [
+            "Automatic routing based on union affiliation",
+            "Separate fulfillment queues per union",
+            "Real-time carrier tracking integration",
+            "Automated status updates on delivery confirmation"
+          ]
+        },
+        
+        "4. Advanced Communication Management": {
+          description: "AI-enhanced member communication and follow-up system",
+          aiFeatures: [
+            "Sentiment analysis for message prioritization",
+            "Automated follow-up scheduling optimization",
+            "Staff workload balancing and assignment",
+            "Communication effectiveness scoring"
+          ],
+          messaging: [
+            "Two-way messaging between members and staff",
+            "Conversation threading and history",
+            "Priority-based message routing",
+            "Response time analytics"
+          ]
+        },
+        
+        "5. Union-Specific Analytics": {
+          description: "Comprehensive operational and clinical performance metrics",
+          dashboards: [
+            "Operational overview (registrations, verifications)",
+            "Clinical metrics (triage outcomes, interventions)",
+            "Communication analytics (response rates, resolutions)",
+            "Union performance comparisons and trends"
+          ]
+        }
+      },
+
+      // API Endpoints Available
+      apiEndpoints: {
+        members: [
+          "POST /api/members/register - New member registration",
+          "GET /api/members - All members with filtering",
+          "GET /api/members?union=UFA - Union-specific members",
+          "PUT /api/members/{id}/verify - Union admin verification"
         ],
-        sampleMember: members[0] || null
-      });
-    } catch (error) {
-      res.json({
-        systemType: "Union-Based Hypertension Program",
-        transformation: "COMPLETE",
-        message: "System successfully transformed from Fire Department BP Management",
-        newFeatures: [
-          "AI-Powered Clinical Triage",
-          "Intelligent Fulfillment Routing", 
-          "Advanced Communication Management",
-          "Union-Specific Analytics",
-          "Two-Way Messaging System"
+        triage: [
+          "POST /api/triage/analyze - AI risk assessment",
+          "GET /api/triage/queue - Clinical review queue",
+          "PUT /api/triage/{id}/review - Human oversight"
+        ],
+        fulfillment: [
+          "POST /api/fulfillment/request - Cuff delivery request",
+          "GET /api/fulfillment/queues - Union-specific queues",
+          "PUT /api/fulfillment/{id}/ship - Process shipment"
+        ],
+        communications: [
+          "POST /api/communications/send - Send message",
+          "GET /api/communications/inbox - Staff inbox",
+          "POST /api/communications/analyze - AI sentiment analysis"
+        ],
+        analytics: [
+          "GET /api/analytics/overview - System-wide metrics",
+          "GET /api/analytics/union/{union} - Union-specific data"
         ]
-      });
-    }
+      },
+
+      // Sample Data Showing Transformation
+      sampleData: {
+        oldSystem: "Fire Department patients with basic BP tracking",
+        newSystem: {
+          member: {
+            fullName: "John Rodriguez",
+            union: "UFA",
+            unionId: "UFA-001",
+            email: "j.rodriguez@ufa.org",
+            medicalHistory: {
+              hypertension: true,
+              diabetes: false,
+              heartDisease: false
+            },
+            lifestyleAssessment: {
+              smoking: "never",
+              exercise: "3-4 times per week",
+              diet: "balanced"
+            },
+            status: "active_members"
+          }
+        }
+      },
+
+      technicalArchitecture: {
+        backend: "Express.js + TypeScript",
+        database: "PostgreSQL + Drizzle ORM", 
+        frontend: "React 18 + Modern Components",
+        styling: "Tailwind CSS + Union Theming",
+        stateManagement: "TanStack Query"
+      }
+    });
   });
 
   // Register new union-based hypertension program routes
@@ -945,6 +1036,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", communicationRoutes);
   app.use("/api", triageRoutes);
   app.use("/api", analyticsRoutes);
+  
+  // Import and register demo features
+  const demoFeatures = require("./demo-features").default;
+  app.use("/api", demoFeatures);
 
   const httpServer = createServer(app);
   return httpServer;
