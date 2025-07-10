@@ -1,52 +1,60 @@
-# Fire Department Blood Pressure Management System
+# Union-Based Hypertension Program Management System
 
 ## Overview
 
-This is a comprehensive blood pressure monitoring and management system designed specifically for fire departments to track firefighter health. The system combines a Django backend with a React frontend to provide a complete solution for patient management, BP monitoring, workflow management, and communication tracking.
+This is a comprehensive union-based hypertension program management system designed to support member health monitoring across multiple unions (UFA, Mount Sinai, LBA, UFOA). The system features AI-powered clinical triage, automated communication management, intelligent fulfillment routing, and member-centric workflows for proactive cardiovascular health intervention.
 
 ## System Architecture
 
-### Hybrid Architecture
-The system uses a hybrid approach with two different architectures:
-1. **Django-only Backend** (Primary): Complete API and web interface in Django
-2. **Node.js + React Frontend** (Secondary): Modern React interface with Express server proxy
-
-### Primary Stack (Django)
-- **Backend**: Django 4.2+ with Django REST Framework
-- **Database**: SQLite (configurable for PostgreSQL/MySQL)
-- **Authentication**: Django's built-in authentication system
-- **Admin Interface**: Django admin panel with custom configurations
-
-### Secondary Stack (Node.js + React)
-- **Frontend**: React 18 with TypeScript
-- **Styling**: Tailwind CSS with blue theme customization
+### Modern Node.js + React Stack
+- **Backend**: Express.js with TypeScript for API services
+- **Database**: PostgreSQL with Drizzle ORM for schema management
+- **Frontend**: React 18 with TypeScript and modern component architecture
+- **Styling**: Tailwind CSS with custom union-specific theming
 - **UI Components**: Radix UI primitives with shadcn/ui
-- **State Management**: TanStack Query for server state
+- **State Management**: TanStack Query for server state management
 - **Routing**: Wouter for lightweight client-side routing
 - **Build Tool**: Vite for fast development and building
 
 ## Key Components
 
-### Backend Components
-1. **User Management**: Custom User model with role-based access (admin, nurse, coach, firefighter)
-2. **Patient Management**: Complete firefighter patient records with department tracking
-3. **BP Reading System**: Automated blood pressure categorization and abnormal reading detection
-4. **Workflow Management**: Task assignment and follow-up tracking with priority levels
-5. **Communication Logging**: Advanced logging with filtering and analytics capabilities
+### Union-Based Member Management
+1. **Member Registration**: Mobile app intake with union-specific routing
+2. **Verification Workflow**: Union admin approval process with role-based access
+3. **Member Profiles**: Comprehensive health profiles with medical history
+4. **Dynamic Member Lists**: Active, inactive, pending first reading categorization
+5. **Union Analytics**: Performance metrics segmented by union affiliation
 
-### Frontend Components
-1. **Dashboard**: Real-time overview with interactive charts and statistics
-2. **Patient Interface**: Comprehensive patient management with search and filtering
-3. **BP Monitoring**: Individual patient BP trend visualization
-4. **Workflow Tasks**: Task management interface with priority sorting
-5. **Communication Tracking**: Advanced communication history and analytics
+### AI-Powered Clinical Triage
+1. **Automated BP Analysis**: Real-time abnormal reading detection
+2. **Risk Assessment**: Multi-factor cardiovascular risk scoring
+3. **Intervention Recommendations**: AI-driven assignment to coaches or nurse practitioners
+4. **Clinical Review**: Human oversight and override capabilities
+5. **Trend Analysis**: Historical pattern recognition and escalation
+
+### Intelligent Fulfillment System
+1. **Union-Based Routing**: Automatic fulfillment path determination (ShipNYC vs Union inventory)
+2. **Queue Management**: Separate fulfillment queues per union (UFA, Mount Sinai, LBA, UFOA)
+3. **Tracking Integration**: Carrier API integration for real-time shipping updates
+4. **Status Automation**: Automatic member reassignment upon delivery confirmation
+5. **Inventory Analytics**: Fulfillment performance metrics by union and queue
+
+### Advanced Communication Management
+1. **AI-Driven Follow-up**: Automated follow-up scheduling based on interaction outcomes
+2. **Sentiment Analysis**: AI sentiment detection for communication prioritization
+3. **Two-Way Messaging**: In-app messaging system between members and staff
+4. **Communication Analytics**: Resolution rates, response times, and effectiveness metrics
+5. **Staff Assignment**: Intelligent routing to appropriate clinical or support staff
 
 ### Database Schema
-- **Users**: Custom user model extending Django's AbstractUser
-- **Patients**: Firefighter records with department, union, and medical information
-- **BP Readings**: Blood pressure measurements with automatic categorization
-- **Workflow Tasks**: Task management with assignment and status tracking
-- **Communication Logs**: Patient interaction history with outcomes and analytics
+- **Members**: Union member profiles with comprehensive medical and lifestyle data
+- **Users**: Staff management with role-based permissions (admin, clinical_team, fulfillment_team, communication_staff, union_rep)
+- **Cuff Fulfillment**: End-to-end tracking from request to delivery with union-specific routing
+- **Clinical Triage**: AI triage results with human review capabilities
+- **Communications**: Enhanced communication logging with AI analysis
+- **Messages**: Two-way messaging system with conversation threading
+- **BP Readings**: Enhanced readings with device sync and member association
+- **Workflow Tasks**: AI-generated and manual task management
 
 ## Data Flow
 
@@ -115,6 +123,18 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- July 10, 2025: **MAJOR TRANSFORMATION** - Converted entire system from Fire Department BP Management to Union-Based Hypertension Program
+- July 10, 2025: Redesigned database schema with new member-centric tables (members, cuffFulfillment, clinicalTriage, communications, messages)
+- July 10, 2025: Created comprehensive backend services: MemberService, AiTriageService, CommunicationService
+- July 10, 2025: Implemented AI-powered clinical triage with risk assessment and intervention recommendations
+- July 10, 2025: Built intelligent fulfillment system with union-specific routing (UFA→ShipNYC, Mount Sinai→ShipNYC, LBA→Union inventory, UFOA→Union inventory)
+- July 10, 2025: Added advanced communication management with AI sentiment analysis and automated follow-up scheduling
+- July 10, 2025: Created comprehensive API endpoints for member registration, verification, fulfillment tracking, triage, and analytics
+- July 10, 2025: Established role-based access control for union representatives, clinical teams, fulfillment teams, and communication staff
+- July 10, 2025: Integrated two-way messaging system with conversation threading between members and staff
+- July 10, 2025: Built analytics dashboard with real-time metrics for operational, clinical, and communication performance
+
+## Previous Fire Department System Changes
 - June 26, 2025: Added Date of Birth field with automatic age calculation
 - June 26, 2025: Removed authentication requirement - direct access without login
 - June 26, 2025: Updated patient management to show both DOB and calculated age
@@ -135,3 +155,4 @@ Preferred communication style: Simple, everyday language.
 Changelog:
 - June 17, 2025. Initial setup
 - June 26, 2025. DOB implementation and authentication removal
+- July 10, 2025. Complete system transformation to Union-Based Hypertension Program

@@ -5,6 +5,12 @@ import { insertBpReadingSchema, insertWorkflowTaskSchema, insertCommunicationLog
 import { calculateAge } from "@shared/date-utils";
 import { workflowEventService } from "./services/workflow-events";
 
+// Import new union-based hypertension program routes
+import memberRoutes from "./routes/member-routes";
+import communicationRoutes from "./routes/communication-routes";
+import triageRoutes from "./routes/triage-routes";
+import analyticsRoutes from "./routes/analytics-routes";
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication with automatic role detection
   app.post("/api/auth/login", async (req, res) => {
@@ -887,6 +893,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
+
+  // Register new union-based hypertension program routes
+  app.use("/api", memberRoutes);
+  app.use("/api", communicationRoutes);
+  app.use("/api", triageRoutes);
+  app.use("/api", analyticsRoutes);
 
   const httpServer = createServer(app);
   return httpServer;

@@ -1,0 +1,494 @@
+Union-Based Hypertension Program App – Full Requirements Specification
+
+1. Member Access and App Download
+1.1 Member Invitation and Access
+Members receive a union-specific invitation link via SMS or email.
+
+
+Device-aware redirection:
+
+
+iOS → Apple App Store
+
+
+Android → Google Play Store
+
+
+Optional deep linking:
+
+
+Link includes union_id for pre-populating registration and data routing
+
+
+Union ID is persisted in backend for downstream logic
+
+
+
+2. Member Registration and Onboarding
+2.1 Intake Form (App)
+Fields captured:
+
+
+Full name
+
+
+Date of birth
+
+
+Gender
+
+
+Email, mobile phone, mailing address
+
+
+Union (prefilled or dropdown)
+
+
+Height, weight
+
+
+Past Medical History (checkboxes + free text)
+
+
+Lifestyle questions (smoking, alcohol, exercise, diet, sleep)
+
+
+Current medications
+
+
+Emergency contact (optional)
+
+
+2.2 Backend Processing
+Creates a member record with status = pending_verification
+
+
+Sends records to:
+
+
+Internal queue: “New Member Intake Queue”
+
+
+Union queue: “Union Verification Queue” (limited fields only)
+
+
+
+3. Verification Workflow
+3.1 Union Admin Panel
+Displays:
+
+
+Name, DOB, contact info, union, submission timestamp
+
+
+Actions:
+
+
+Approve → sets status = approved, unlocks BP cuff request, sends notification
+
+
+Reject → sets status = rejected, notifies internal team and member
+
+
+
+4. BP Cuff Request and Fulfillment (with Routing and Tracking)
+4.1 Cuff Request Flow (App)
+Member confirms shipping address during request
+
+
+Record created in DB and routed based on union affiliation
+
+
+4.2 Fulfillment Routing Logic
+Union
+Fulfillment Path
+System Queue
+UFA
+ShipNYC
+ShipNYC_UFA_Queue
+Mount Sinai
+ShipNYC
+ShipNYC_MountSinai_Queue
+LBA
+Union inventory
+Union_LBA_Fulfillment_Queue
+UFOA
+Union inventory
+Union_UFOA_Fulfillment_Queue
+
+4.3 Tracking Number Entry
+Tracking number is entered by:
+
+
+ShipNYC (UFA and Mount Sinai)
+
+
+Union teams (LBA, UFOA)
+
+
+Fields captured:
+
+
+tracking_number
+
+
+carrier
+
+
+tracking_url
+
+
+entered_by and timestamp
+
+
+4.4 Automated Shipping Status Updates
+System polls carrier APIs or uses webhooks to update:
+
+
+label_created
+
+
+shipped
+
+
+in_transit
+
+
+out_for_delivery
+
+
+delivered
+
+
+fulfilled
+
+
+Status changes update the member’s record and fulfillment queue
+
+
+Optional SMS/email/push alerts notify member
+
+
+4.5 Fulfillment Status Lifecycle
+States:
+
+
+awaiting_shipment
+
+
+shipped
+
+
+in_transit
+
+
+delivered
+
+
+fulfilled
+
+
+Transitions logged and reflected in dashboards and audit logs
+
+
+4.6 Member Reassignment After Delivery
+Upon delivery confirmation:
+
+
+Member is removed from fulfillment queue
+
+
+Member is reassigned to:
+
+
+pending_first_reading: No BP reading submitted
+
+
+active_members: Reading submitted within 6 months
+
+
+inactive_members: No reading in past 6 months
+
+
+
+5. Blood Pressure Monitoring
+5.1 Bluetooth Sync
+BP cuff pairs with app via Bluetooth
+
+
+Syncs readings:
+
+
+Systolic, diastolic, heart rate (optional), timestamp
+
+
+5.2 Backend Storage & Classification
+Readings stored in bp_readings table
+
+
+Auto-classified:
+
+
+normal: SBP < 140 and DBP < 90
+
+
+abnormal: SBP ≥ 140 or DBP ≥ 90
+
+
+5.3 Dynamic Member Lists
+active_members: Reading in last 6 months
+
+
+inactive_members: No reading in last 6 months
+
+
+pending_first_reading: No reading ever submitted
+
+
+abnormal_bp_list: Most recent BP flagged abnormal
+
+
+
+6. Clinical Triage and Intervention (AI-Driven)
+6.1 Trigger Logic
+Abnormal BP auto-routes member to Clinical Review Queue
+
+
+Reviewed first by AI triage system
+
+
+6.2 AI Inputs
+BP trends and variability
+
+
+Onboarding data (PMH, lifestyle)
+
+
+Medication usage
+
+
+Communication history:
+
+
+Call outcomes
+
+
+Coaching notes
+
+
+In-app messages
+
+
+6.3 AI Workflow
+AI assigns:
+
+
+intervention_type: none / coach / NP
+
+
+intervention_due_date
+
+
+assigned_staff_id
+
+
+Logs:
+
+
+Triage reasoning
+
+
+Flagged trends
+
+
+Previous coaching failures or escalation history
+
+
+6.4 Clinical Staff Review
+Can override or confirm AI suggestion
+
+
+Manual changes are logged with timestamp, staff ID, and rationale
+
+
+
+7. Communication Management System (AI-Driven Follow-Up)
+7.1 Communication Dashboard
+Tracks all open interactions:
+
+
+Contact method
+
+
+Last contact
+
+
+Assigned staff
+
+
+Outcome
+
+
+Next scheduled follow-up
+
+
+Status: active / follow-up scheduled / resolved
+
+
+7.2 AI-Based Follow-Up Logic
+AI determines:
+
+
+If follow-up is necessary
+
+
+When the follow-up should occur
+
+
+Inputs:
+
+
+Call/chat outcomes
+
+
+Clinical risk flags
+
+
+Member sentiment
+
+
+Past intervention success
+
+
+If a follow-up is needed:
+
+
+Member is removed from active communication list
+
+
+Task enters scheduled follow-up queue
+
+
+On follow-up due date:
+
+
+Task is automatically returned to active list
+
+
+Staff is alerted via dashboard
+
+
+7.3 Human Override
+Staff can:
+
+
+Override AI-determined follow-ups
+
+
+Reschedule, cancel, or escalate
+
+
+All changes are logged for audit
+
+
+
+8. Analytics Dashboard
+8.1 Operational Metrics
+Members:
+
+
+Registered, approved, rejected, pending
+
+
+Cuff fulfillment:
+
+
+Requested, shipped, delivered
+
+
+Monitoring:
+
+
+% active vs inactive
+
+
+BP control rate
+
+
+Intervention conversion rates
+
+
+8.2 Communication Analytics
+Total calls, messages
+
+
+Resolution rates
+
+
+% needing follow-up
+
+
+Follow-up success
+
+
+
+9. Member Profile View
+Name, DOB, gender, contact info, address
+
+
+Height, weight, BMI
+
+
+PMH and onboarding answers
+
+
+BP reading history (table + graph)
+
+
+Communication logs
+
+
+Assigned staff
+
+
+Intervention status and timeline
+
+
+Fulfillment tracking details
+
+
+
+10. Two-Way Messaging System
+In-app inbox for member and staff
+
+
+Messages stored with:
+
+
+Sender, recipient
+
+
+Timestamp
+
+
+Read/unread status
+
+
+Staff notified of new inbound messages
+
+
+
+11. Permissions and Access Control
+Role
+Access Permissions
+Admin
+Full platform access including analytics, queues, permissions
+Clinical Team
+Member charts, triage queue, interventions
+Fulfillment Team
+Fulfillment queues, tracking entry
+Communication Staff
+Access to contact dashboard, logs, and follow-up management
+Union Rep
+View basic demographics + verification status for their members only
+
