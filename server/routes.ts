@@ -1038,7 +1038,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", analyticsRoutes);
   
   // Import and register demo features
-  const demoFeatures = require("./demo-features").default;
+  const { default: demoFeatures } = await import("./demo-features.js");
   app.use("/api", demoFeatures);
 
   const httpServer = createServer(app);
