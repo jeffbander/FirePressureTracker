@@ -123,6 +123,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- July 16, 2025: **MAJOR DATABASE OPTIMIZATION** - Converted entire database schema to use integer IDs for efficient queries
+- July 16, 2025: Implemented normalized PostgreSQL schema with lookup tables for all string values (unions, statuses, priorities, categories)
+- July 16, 2025: Created 11 lookup tables: roles, unions, genders, member_statuses, task_statuses, task_priorities, task_types, bp_categories, communication_types, communication_statuses, fulfillment_statuses
+- July 16, 2025: Replaced expensive string comparisons with integer foreign key relationships for optimal query performance
+- July 16, 2025: Updated storage layer to use Drizzle ORM with PostgreSQL and new normalized schema structure
+- July 16, 2025: Created database initialization scripts with proper lookup table population
+- July 16, 2025: Rebuilt API endpoints to work with integer-based schema while maintaining backward compatibility
+- July 16, 2025: Successfully migrated from old Django-based tables to optimized union-based hypertension program schema
 - July 10, 2025: **MAJOR TRANSFORMATION** - Converted entire system from Fire Department BP Management to Union-Based Hypertension Program
 - July 10, 2025: Redesigned database schema with new member-centric tables (members, cuffFulfillment, clinicalTriage, communications, messages)
 - July 10, 2025: Created comprehensive backend services: MemberService, AiTriageService, CommunicationService

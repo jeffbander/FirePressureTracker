@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertPatientSchema } from "@shared/schema";
+import { insertMemberSchema } from "@shared/schema";
 import { calculateAge } from "@shared/date-utils";
 import { z } from "zod";
 
 // Form schema that handles string inputs and transforms them appropriately
-const formSchema = insertPatientSchema.extend({
+const formSchema = insertMemberSchema.extend({
   dateOfBirth: z.string().min(1, "Date of birth is required"),
   age: z.number().optional(), // Age will be auto-calculated
 }).transform((data) => ({
