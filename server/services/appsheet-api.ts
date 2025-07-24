@@ -18,7 +18,7 @@ class AppSheetAPI {
   constructor() {
     this.config = {
       appId: process.env.APPSHEET_APP_ID || '',
-      accessToken: process.env.APPSHEET_ACCESS_TOKEN || '',
+      accessToken: process.env.APPSHEET_API_KEY_1 || process.env.APPSHEET_API_KEY_2 || '',
       baseUrl: process.env.APPSHEET_BASE_URL || 'https://api.appsheet.com/api/v2/apps'
     };
   }
