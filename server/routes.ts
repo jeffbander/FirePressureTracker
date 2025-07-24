@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBpReadingSchema, insertWorkflowTaskSchema, insertCommunicationSchema, insertMemberSchema } from "@shared/schema";
+import { registerAppSheetRoutes } from "./routes/appsheet-integration";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard statistics
@@ -336,6 +337,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch tasks by assignee" });
     }
   });
+
+  // Register AppSheet integration routes
+  registerAppSheetRoutes(app);
 
   const server = createServer(app);
   return server;
