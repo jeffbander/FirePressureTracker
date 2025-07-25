@@ -188,14 +188,10 @@ export function AddPatientDialog({ open, onOpenChange }: AddPatientDialogProps) 
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Union 1">Union 1</SelectItem>
-                        <SelectItem value="Union 2">Union 2</SelectItem>
-                        <SelectItem value="Union 3">Union 3</SelectItem>
-                        <SelectItem value="Union 4">Union 4</SelectItem>
-                        <SelectItem value="Union 5">Union 5</SelectItem>
-                        <SelectItem value="Union 7">Union 7</SelectItem>
-                        <SelectItem value="Union 15">Union 15</SelectItem>
-                        <SelectItem value="Headquarters">Headquarters</SelectItem>
+                        <SelectItem value="UFOA">UFOA</SelectItem>
+                        <SelectItem value="ufa">ufa</SelectItem>
+                        <SelectItem value="lba">lba</SelectItem>
+                        <SelectItem value="sinai">sinai</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

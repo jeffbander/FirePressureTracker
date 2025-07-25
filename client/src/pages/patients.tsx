@@ -508,10 +508,10 @@ export default function Patients() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Unions</SelectItem>
-                    <SelectItem value="Union 1">Union 1</SelectItem>
-                    <SelectItem value="Union 3">Union 3</SelectItem>
-                    <SelectItem value="Union 7">Union 7</SelectItem>
-                    <SelectItem value="Union 15">Union 15</SelectItem>
+                    <SelectItem value="UFOA">UFOA</SelectItem>
+                    <SelectItem value="ufa">ufa</SelectItem>
+                    <SelectItem value="lba">lba</SelectItem>
+                    <SelectItem value="sinai">sinai</SelectItem>
                   </SelectContent>
                 </Select>
 
