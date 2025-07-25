@@ -464,6 +464,142 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AppSheet BP Readings Pull Route
+  app.post('/api/appsheet/pull-readings', async (req, res) => {
+    try {
+      const { appId, limit = 50 } = req.body;
+      
+      if (!appId) {
+        return res.status(400).json({ error: 'AppSheet App ID is required' });
+      }
+      
+      const API_KEY = process.env.APPSHEET_API_KEY_1;
+      if (!API_KEY) {
+        return res.status(500).json({ error: 'AppSheet API key not configured' });
+      }
+      
+      console.log('🔄 Starting AppSheet readings pull...');
+      console.log(`🎯 Using AppSheet App ID: ${appId}`);
+      
+      // Get readings from app_data table
+      const response = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/app_data/Action`, {
+        method: 'POST',
+        headers: {
+          'ApplicationAccessKey': API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          Action: 'Find',
+          Properties: {
+            Locale: 'en-US'
+          },
+          Rows: []
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`AppSheet API request failed: ${response.status}`);
+      }
+      
+      const responseText = await response.text();
+      console.log(`📊 Response size: ${responseText.length} characters`);
+      
+      let appsheetReadings = [];
+      try {
+        appsheetReadings = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('❌ JSON parse error:', parseError);
+        return res.status(500).json({ error: 'Invalid JSON response from AppSheet' });
+      }
+      
+      console.log(`📊 Retrieved ${appsheetReadings.length || 0} readings from AppSheet`);
+      
+      const syncedReadings = [];
+      const errors = [];
+      
+      // Get current member names to prioritize matching readings
+      const allMembers = await storage.getAllMembers();
+      const memberNames = allMembers.map(m => m.fullName || `${m.firstName} ${m.lastName}`);
+      
+      // Filter readings that match our members first
+      const matchingReadings = appsheetReadings.filter(reading => {
+        const readingName = reading.Decode_Name || '';
+        const sbp = parseInt(reading.SBP || '0');
+        const dbp = parseInt(reading.DBP || '0');
+        return memberNames.includes(readingName) && sbp > 0 && dbp > 0;
+      }).slice(0, limit);
+      
+      console.log(`🎯 Syncing ${matchingReadings.length} readings that match our members...`);
+      
+      for (const appsheetReading of matchingReadings) {
+        try {
+          // Find corresponding member (we know it exists since we filtered for matches)
+          let member = null;
+          
+          // Find member by decoded name field
+          const readingName = appsheetReading.Decode_Name || '';
+          member = allMembers.find(m => 
+            m.fullName === readingName || 
+            `${m.firstName} ${m.lastName}` === readingName
+          );
+          
+          if (!member) {
+            console.log(`⏭️  No member found for reading: ${readingName}`);
+            continue;
+          }
+          
+          // Convert AppSheet reading format to local format with required fields
+          const readingData = {
+            memberId: member.id,
+            systolic: parseInt(appsheetReading.SBP || '0'),
+            diastolic: parseInt(appsheetReading.DBP || '0'),
+            heartRate: parseInt(appsheetReading.HR || '0') || null,
+            categoryId: 1, // Default category, will be properly categorized later
+            recordedAt: new Date(appsheetReading.Timestamp || new Date()),
+            deviceId: appsheetReading['Device ID'] || null,
+            syncedFromDevice: !!appsheetReading['Device ID'],
+            notes: appsheetReading.Notes || null
+          };
+          
+          // Skip invalid readings
+          if (readingData.systolic === 0 || readingData.diastolic === 0) {
+            continue;
+          }
+          
+          const newReading = await storage.createBpReading(readingData);
+          console.log(`✅ Created reading: ${readingData.systolic}/${readingData.diastolic} for ${member.fullName}`);
+          syncedReadings.push({ ...newReading, status: 'created' });
+          
+        } catch (error) {
+          console.error(`❌ Error syncing reading:`, error);
+          errors.push({
+            reading: JSON.stringify(appsheetReading),
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      }
+      
+      res.json({
+        success: true,
+        message: `Synced ${syncedReadings.length} new readings from AppSheet`,
+        data: {
+          appId,
+          totalFound: appsheetReadings.length || 0,
+          withData: matchingReadings.length,
+          syncedReadings,
+          errors
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ AppSheet readings pull error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Helper function to map union names to IDs
   function getUnionId(unionName: string): number {
     const unionMap: Record<string, number> = {
