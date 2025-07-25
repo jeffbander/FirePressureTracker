@@ -352,7 +352,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Use provided App ID or try to discover it
-      let appId = req.body.appId || process.env.APPSHEET_APP_ID;
+      let appId = req.body.appId || process.env.APPSHEET_APP_ID || '29320fd7-0017-46ab-8427-0c15b574f046';
       
       if (!appId) {
         return res.status(400).json({ 
@@ -363,8 +363,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`🎯 Using AppSheet App ID: ${appId}`);
 
-      // Get members from AppSheet
-      const membersResponse = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Members/Action`, {
+      // Get members from AppSheet (Users table)
+      const membersResponse = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Users/Action`, {
         method: 'POST',
         headers: {
           'ApplicationAccessKey': API_KEY,
@@ -387,43 +387,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const appsheetMembers = await membersResponse.json();
+      const responseText = await membersResponse.text();
+      console.log(`📊 Response size: ${responseText.length} characters`);
+      
+      let appsheetMembers = [];
+      if (responseText.trim()) {
+        try {
+          appsheetMembers = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError.message);
+          return res.status(500).json({ 
+            success: false, 
+            error: `Failed to parse AppSheet response: ${parseError.message}` 
+          });
+        }
+      }
+      
       console.log(`📊 Retrieved ${appsheetMembers.length || 0} members from AppSheet`);
 
       const syncedMembers = [];
       const errors = [];
+      
+      // Limit to first 10 members for testing
+      const membersToSync = appsheetMembers.slice(0, 10);
+      console.log(`🎯 Syncing first ${membersToSync.length} members for testing...`);
 
-      if (appsheetMembers && appsheetMembers.length > 0) {
-        for (const appsheetMember of appsheetMembers) {
+      if (membersToSync && membersToSync.length > 0) {
+        for (const appsheetMember of membersToSync) {
           try {
             // Convert AppSheet format to local format
             const memberData = {
-              fullName: appsheetMember.fullName || appsheetMember.name || 'Unknown Member',
+              fullName: appsheetMember.Name || 'Unknown Member',
               email: appsheetMember.email || `member${Date.now()}@example.com`,
-              mobilePhone: appsheetMember.mobilePhone || appsheetMember.phone || '555-0000',
-              dateOfBirth: appsheetMember.dateOfBirth || '1980-01-01',
-              unionId: parseInt(appsheetMember.unionId) || 1,
-              unionMemberId: appsheetMember.unionMemberId || `AS-${Date.now()}`,
-              height: parseInt(appsheetMember.height) || 70,
-              weight: parseInt(appsheetMember.weight) || 170,
+              mobilePhone: appsheetMember.Phone || '555-0000',
+              dateOfBirth: appsheetMember.DOB || '1980-01-01',
+              unionId: getUnionId(appsheetMember.union || 'UFA'),
+              unionMemberId: appsheetMember.User_ID || appsheetMember._RowNumber || `AS-${Date.now()}`,
+              height: parseInt(appsheetMember.Height) || 70,
+              weight: parseInt(appsheetMember.Weight) || 170,
               statusId: 1 // Active
             };
 
-            // Check if member already exists
-            const existingMember = await storage.getMemberByEmail(memberData.email);
-            if (existingMember) {
-              console.log(`⏭️  Member ${memberData.fullName} already exists`);
-              syncedMembers.push({ ...existingMember, status: 'existing' });
-            } else {
-              const newMember = await storage.createMember(memberData);
-              console.log(`✅ Created member: ${newMember.fullName}`);
-              syncedMembers.push({ ...newMember, status: 'created' });
-            }
+
+
+            // Create member (skip duplicate check for now to get data synced)
+            const newMember = await storage.createMember(memberData);
+            console.log(`✅ Created member: ${newMember.fullName} (${newMember.unionMemberId})`);
+            syncedMembers.push({ ...newMember, status: 'created' });
           } catch (error) {
             console.error(`❌ Error syncing member:`, error);
             errors.push({
-              member: appsheetMember.fullName || 'Unknown',
-              error: error.message
+              member: appsheetMember.Name || 'Unknown',
+              error: error instanceof Error ? error.message : 'Unknown error'
             });
           }
         }
@@ -444,10 +459,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('❌ AppSheet pull error:', error);
       res.status(500).json({ 
         success: false, 
-        error: error.message 
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
+
+  // Helper function to map union names to IDs
+  function getUnionId(unionName: string): number {
+    const unionMap: Record<string, number> = {
+      'UFA': 1,
+      'MOUNT SINAI': 2, 
+      'Mount Sinai': 2,
+      'LBA': 3,
+      'UFOA': 4
+    };
+    return unionMap[unionName] || 1;
+  }
 
   // Register AppSheet integration routes
   registerAppSheetRoutes(app);
