@@ -341,6 +341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Pull members from AppSheet
   app.post("/api/appsheet/pull-members", async (req, res) => {
     try {
+      const { appId, limit = 502 } = req.body;
       console.log('🔄 Starting AppSheet member pull...');
       
       const API_KEY = process.env.APPSHEET_API_KEY_1;
@@ -352,19 +353,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Use provided App ID or try to discover it
-      let appId = req.body.appId || process.env.APPSHEET_APP_ID || '29320fd7-0017-46ab-8427-0c15b574f046';
+      let finalAppId = appId || process.env.APPSHEET_APP_ID || '29320fd7-0017-46ab-8427-0c15b574f046';
       
-      if (!appId) {
+      if (!finalAppId) {
         return res.status(400).json({ 
           success: false, 
           error: 'AppSheet App ID required. Please provide appId in request body or set APPSHEET_APP_ID environment variable.' 
         });
       }
 
-      console.log(`🎯 Using AppSheet App ID: ${appId}`);
+      console.log(`🎯 Using AppSheet App ID: ${finalAppId}`);
 
       // Get members from AppSheet (Users table)
-      const membersResponse = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Users/Action`, {
+      const membersResponse = await fetch(`https://api.appsheet.com/api/v2/apps/${finalAppId}/tables/Users/Action`, {
         method: 'POST',
         headers: {
           'ApplicationAccessKey': API_KEY,
@@ -408,9 +409,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const syncedMembers = [];
       const errors = [];
       
-      // Limit to first 10 members for testing
-      const membersToSync = appsheetMembers.slice(0, 10);
-      console.log(`🎯 Syncing first ${membersToSync.length} members for testing...`);
+      // Sync up to the requested limit of members
+      const membersToSync = appsheetMembers.slice(0, limit);
+      console.log(`🎯 Syncing ${membersToSync.length} members from AppSheet...`);
 
       if (membersToSync && membersToSync.length > 0) {
         for (const appsheetMember of membersToSync) {
@@ -448,7 +449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
         message: `Synced ${syncedMembers.filter(m => m.status === 'created').length} new members from AppSheet`,
         data: {
-          appId,
+          appId: finalAppId,
           totalFound: appsheetMembers.length || 0,
           syncedMembers,
           errors
