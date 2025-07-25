@@ -33,10 +33,11 @@ export default function Patients() {
 
   // Filter patients based on all criteria
   const filteredPatients = patients.filter((patient: any) => {
-    // Search filter
-    if (search && !patient.firstName?.toLowerCase().includes(search.toLowerCase()) && 
-        !patient.lastName?.toLowerCase().includes(search.toLowerCase()) &&
+    // Search filter - support both fullName (AppSheet) and firstName/lastName (legacy)
+    const fullName = patient.fullName || `${patient.firstName || ''} ${patient.lastName || ''}`.trim();
+    if (search && !fullName.toLowerCase().includes(search.toLowerCase()) &&
         !patient.employeeId?.toLowerCase().includes(search.toLowerCase()) &&
+        !patient.unionMemberId?.toLowerCase().includes(search.toLowerCase()) &&
         !patient.department?.toLowerCase().includes(search.toLowerCase())) {
       return false;
     }
@@ -705,15 +706,19 @@ export default function Patients() {
                           <div className="flex items-center space-x-3">
                             <div className="w-12 h-12 bg-primary bg-opacity-10 rounded-full flex items-center justify-center">
                               <span className="text-primary font-bold text-lg">
-                                {patient.firstName?.[0]}{patient.lastName?.[0]}
+                                {(() => {
+                                  const fullName = patient.fullName || `${patient.firstName || ''} ${patient.lastName || ''}`.trim();
+                                  const nameParts = fullName.split(' ');
+                                  return (nameParts[0]?.[0] || '') + (nameParts[1]?.[0] || '');
+                                })()}
                               </span>
                             </div>
                             <div>
                               <h3 className="font-semibold text-lg">
-                                {patient.firstName} {patient.lastName}
+                                {patient.fullName || `${patient.firstName || ''} ${patient.lastName || ''}`.trim()}
                               </h3>
                               <p className="text-sm text-gray-600">
-                                {patient.union} • ID: {patient.employeeId} • Age: {patient.age}
+                                Union {patient.unionId || 'N/A'} • ID: {patient.unionMemberId || patient.employeeId || 'N/A'} • Age: {patient.age || 'N/A'}
                                 {patient.dateOfBirth && (
                                   <span> • DOB: {new Date(patient.dateOfBirth).toLocaleDateString()}</span>
                                 )}
@@ -741,7 +746,7 @@ export default function Patients() {
                       </CardHeader>
                       <CardContent className="pb-4">
                         <IndividualBPChart
-                          patientName={`${patient.firstName} ${patient.lastName}`}
+                          patientName={patient.fullName || `${patient.firstName || ''} ${patient.lastName || ''}`.trim()}
                           readings={patient.readings || []}
                           height="h-48"
                         />
@@ -798,12 +803,12 @@ export default function Patients() {
                     {filteredPatients.map((patient: any) => (
                       <TableRow key={patient.id}>
                         <TableCell className="font-medium">
-                          {patient.firstName} {patient.lastName}
+                          {patient.fullName || `${patient.firstName || ''} ${patient.lastName || ''}`.trim()}
                         </TableCell>
-                        <TableCell>{patient.employeeId}</TableCell>
+                        <TableCell>{patient.unionMemberId || patient.employeeId || 'N/A'}</TableCell>
                         <TableCell>
                           <div className="text-sm">
-                            <div className="font-medium">{patient.age} years</div>
+                            <div className="font-medium">{patient.age || 'N/A'} years</div>
                             {patient.dateOfBirth && (
                               <div className="text-gray-500 text-xs">
                                 {new Date(patient.dateOfBirth).toLocaleDateString()}
@@ -811,7 +816,7 @@ export default function Patients() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>{patient.union}</TableCell>
+                        <TableCell>{patient.unionId || patient.union || 'N/A'}</TableCell>
                         <TableCell>{patient.department}</TableCell>
                         <TableCell>
                           {patient.isRetired ? (
