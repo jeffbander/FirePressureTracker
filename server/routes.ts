@@ -338,6 +338,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pull members from AppSheet
+  app.post("/api/appsheet/pull-members", async (req, res) => {
+    try {
+      console.log('🔄 Starting AppSheet member pull...');
+      
+      const API_KEY = process.env.APPSHEET_API_KEY_1;
+      if (!API_KEY) {
+        return res.status(500).json({ 
+          success: false, 
+          error: 'AppSheet API key not configured' 
+        });
+      }
+
+      // Use provided App ID or try to discover it
+      let appId = req.body.appId || process.env.APPSHEET_APP_ID;
+      
+      if (!appId) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'AppSheet App ID required. Please provide appId in request body or set APPSHEET_APP_ID environment variable.' 
+        });
+      }
+
+      console.log(`🎯 Using AppSheet App ID: ${appId}`);
+
+      // Get members from AppSheet
+      const membersResponse = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Members/Action`, {
+        method: 'POST',
+        headers: {
+          'ApplicationAccessKey': API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          Action: 'Find',
+          Properties: {
+            Locale: 'en-US'
+          },
+          Rows: []
+        })
+      });
+
+      if (!membersResponse.ok) {
+        const errorText = await membersResponse.text();
+        return res.status(500).json({ 
+          success: false, 
+          error: `Failed to fetch members: ${errorText}` 
+        });
+      }
+
+      const appsheetMembers = await membersResponse.json();
+      console.log(`📊 Retrieved ${appsheetMembers.length || 0} members from AppSheet`);
+
+      const syncedMembers = [];
+      const errors = [];
+
+      if (appsheetMembers && appsheetMembers.length > 0) {
+        for (const appsheetMember of appsheetMembers) {
+          try {
+            // Convert AppSheet format to local format
+            const memberData = {
+              fullName: appsheetMember.fullName || appsheetMember.name || 'Unknown Member',
+              email: appsheetMember.email || `member${Date.now()}@example.com`,
+              mobilePhone: appsheetMember.mobilePhone || appsheetMember.phone || '555-0000',
+              dateOfBirth: appsheetMember.dateOfBirth || '1980-01-01',
+              unionId: parseInt(appsheetMember.unionId) || 1,
+              unionMemberId: appsheetMember.unionMemberId || `AS-${Date.now()}`,
+              height: parseInt(appsheetMember.height) || 70,
+              weight: parseInt(appsheetMember.weight) || 170,
+              statusId: 1 // Active
+            };
+
+            // Check if member already exists
+            const existingMember = await storage.getMemberByEmail(memberData.email);
+            if (existingMember) {
+              console.log(`⏭️  Member ${memberData.fullName} already exists`);
+              syncedMembers.push({ ...existingMember, status: 'existing' });
+            } else {
+              const newMember = await storage.createMember(memberData);
+              console.log(`✅ Created member: ${newMember.fullName}`);
+              syncedMembers.push({ ...newMember, status: 'created' });
+            }
+          } catch (error) {
+            console.error(`❌ Error syncing member:`, error);
+            errors.push({
+              member: appsheetMember.fullName || 'Unknown',
+              error: error.message
+            });
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Synced ${syncedMembers.filter(m => m.status === 'created').length} new members from AppSheet`,
+        data: {
+          appId,
+          totalFound: appsheetMembers.length || 0,
+          syncedMembers,
+          errors
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ AppSheet pull error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message 
+      });
+    }
+  });
+
   // Register AppSheet integration routes
   registerAppSheetRoutes(app);
 
