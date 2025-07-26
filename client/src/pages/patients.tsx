@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddPatientDialog } from "@/components/add-patient-dialog";
 import { IndividualBPChart } from "@/components/individual-bp-chart";
 import { Users, Activity, Heart, Calendar, Building, UserCheck, TrendingUp, BarChart3, PieChart, Bell, CalendarDays, Clock, Phone } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Patients() {
   const [search, setSearch] = useState('');
@@ -26,10 +27,85 @@ export default function Patients() {
 
   const [currentPage, setCurrentPage] = useState(1);
   
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [search, statusFilter, unionFilter, ageGroupFilter, employmentStatusFilter, genderFilter, activityFilter]);
+
+  // Communication mutation
+  const logCommunicationMutation = useMutation({
+    mutationFn: async (communicationData: any) => {
+      const response = await fetch('/api/communications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(communicationData)
+      });
+      if (!response.ok) throw new Error('Failed to log communication');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Communication logged successfully" });
+      queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error logging communication", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    }
+  });
+
+  // Call function with proper dialog
+  const handleCall = (patient: any) => {
+    const outcomes = [
+      { value: 'completed', label: 'Answered - Completed' },
+      { value: 'voicemail', label: 'Left Voicemail' },
+      { value: 'no_answer', label: 'No Answer' },
+      { value: 'busy', label: 'Busy' }
+    ];
+
+    const outcomeChoice = prompt(
+      `Calling ${patient.fullName || `${patient.firstName} ${patient.lastName}`}\n\nCall outcome:\n` +
+      outcomes.map((o, i) => `${i + 1}. ${o.label}`).join('\n') +
+      '\n\nEnter number (1-4):'
+    );
+
+    const outcomeIndex = parseInt(outcomeChoice || '0') - 1;
+    if (outcomeIndex >= 0 && outcomeIndex < outcomes.length) {
+      const selectedOutcome = outcomes[outcomeIndex];
+      const notes = prompt('Call notes (optional):') || '';
+      
+      logCommunicationMutation.mutate({
+        memberId: patient.id,
+        type: 'call',
+        content: `Call outcome: ${selectedOutcome.label}${notes ? `. Notes: ${notes}` : ''}`,
+        outcome: selectedOutcome.value,
+        staffId: 1 // Default staff ID
+      });
+
+      if (selectedOutcome.value === 'completed') {
+        const needsFollowup = confirm('Schedule follow-up call?');
+        if (needsFollowup) {
+          const date = prompt('Follow-up date (YYYY-MM-DD):');
+          const reason = prompt('Reason for follow-up:', 'BP check-in');
+          if (date && reason) {
+            // Log follow-up task
+            logCommunicationMutation.mutate({
+              memberId: patient.id,
+              type: 'follow_up',
+              content: `Follow-up scheduled for ${date}: ${reason}`,
+              outcome: 'scheduled',
+              staffId: 1
+            });
+          }
+        }
+      }
+    }
+  };
   
   const { data: patientsData, isLoading } = useQuery({
     queryKey: ['/api/patients', currentPage],
@@ -1765,29 +1841,8 @@ export default function Patients() {
                                 <Button 
                                   size="sm" 
                                   variant="outline"
-                                  onClick={() => {
-                                    const outcome = prompt(`Record call for ${patient.firstName} ${patient.lastName}:\n\nSelect outcome:\n1. Done\n2. Left VM\n3. In Progress\n4. Needs Call\n\nEnter number (1-4):`);
-                                    const outcomes = ['', 'done', 'left vm', 'in progress', 'needs call'];
-                                    const selectedOutcome = outcomes[parseInt(outcome || '0')];
-                                    
-                                    if (selectedOutcome) {
-                                      let followupNeeded = false;
-                                      if (selectedOutcome === 'done') {
-                                        const needsFollowup = confirm('Was a follow-up call scheduled during this conversation?');
-                                        if (needsFollowup) {
-                                          const followupDate = prompt('Enter follow-up date (YYYY-MM-DD):');
-                                          if (followupDate) {
-                                            followupNeeded = true;
-                                            alert(`Call recorded as "${selectedOutcome}"\nFollow-up scheduled for: ${followupDate}\n\nPatient will reappear in your call list on ${followupDate}.`);
-                                          }
-                                        } else {
-                                          alert(`Call recorded as "${selectedOutcome}"\nNo follow-up needed.`);
-                                        }
-                                      } else {
-                                        alert(`Call recorded as "${selectedOutcome}"`);
-                                      }
-                                    }
-                                  }}
+                                  onClick={() => handleCall(patient)}
+                                  disabled={logCommunicationMutation.isPending}
                                 >
                                   <Phone className="h-4 w-4" />
                                 </Button>
@@ -1882,9 +1937,15 @@ export default function Patients() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                <Button size="sm" variant="outline" className="text-red-600 border-red-200">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="text-red-600 border-red-200"
+                                  onClick={() => handleCall(patient)}
+                                  disabled={logCommunicationMutation.isPending}
+                                >
                                   <Phone className="h-4 w-4 mr-1" />
-                                  Call Now
+                                  {logCommunicationMutation.isPending ? 'Logging...' : 'Call Now'}
                                 </Button>
                                 <Button size="sm" variant="outline">
                                   <Calendar className="h-4 w-4" />
@@ -2121,26 +2182,8 @@ export default function Patients() {
                               <Button 
                                 size="sm" 
                                 className="bg-red-600 text-white hover:bg-red-700"
-                                onClick={() => {
-                                  const outcome = prompt(`Calling ${patient.firstName} ${patient.lastName}\n\nCall outcome:\n1. Answered - Completed\n2. Left Voicemail\n3. No Answer\n4. Busy\n\nEnter number (1-4):`);
-                                  const outcomes = ['', 'done', 'left vm', 'needs call', 'needs call'];
-                                  const selectedOutcome = outcomes[parseInt(outcome || '0')];
-                                  
-                                  if (selectedOutcome === 'done') {
-                                    const followup = confirm('Schedule follow-up call?');
-                                    if (followup) {
-                                      const date = prompt('Follow-up date (YYYY-MM-DD):');
-                                      const reason = prompt('Reason for follow-up:', 'BP check-in');
-                                      if (date && reason) {
-                                        alert(`Call completed and follow-up scheduled:\n\nPatient: ${patient.firstName} ${patient.lastName}\nFollow-up: ${date}\nReason: ${reason}\n\nPatient will appear in call list on ${date}`);
-                                      }
-                                    } else {
-                                      alert(`Call completed for ${patient.firstName} ${patient.lastName}`);
-                                    }
-                                  } else if (selectedOutcome) {
-                                    alert(`Call logged as: ${selectedOutcome}\nPatient remains in call queue.`);
-                                  }
-                                }}
+                                onClick={() => handleCall(patient)}
+                                disabled={logCommunicationMutation.isPending}
                               >
                                 <Phone className="h-4 w-4" />
                               </Button>

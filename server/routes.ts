@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBpReadingSchema, insertWorkflowTaskSchema, insertCommunicationSchema, insertMemberSchema } from "@shared/schema";
 import { registerAppSheetRoutes } from "./routes/appsheet-integration";
+import communicationRoutes from "./routes/communication-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard statistics
@@ -691,6 +692,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
     return unionMap[unionName] || 1;
   }
+
+  // Communication endpoints
+  app.post("/api/communications", async (req, res) => {
+    try {
+      const { memberId, type, content, staffId, outcome } = req.body;
+      
+      if (!memberId || !type || !content) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Create communication record
+      const communication = await storage.createCommunication({
+        memberId: parseInt(memberId),
+        typeId: type === 'call' ? 1 : type === 'email' ? 2 : 3, // phone, email, message
+        statusId: outcome === 'completed' ? 3 : outcome === 'voicemail' ? 2 : 1, // pending, in_progress, completed
+        subject: `${type} communication`,
+        content,
+        assignedTo: staffId ? parseInt(staffId) : null
+      });
+
+      res.json({ success: true, communication });
+    } catch (error) {
+      console.error('Communication log error:', error);
+      res.status(500).json({ error: "Failed to log communication" });
+    }
+  });
+
+  app.get("/api/communications/member/:memberId", async (req, res) => {
+    try {
+      const memberId = parseInt(req.params.memberId);
+      const communications = await storage.getCommunicationsByMember(memberId);
+      res.json(communications);
+    } catch (error) {
+      console.error('Get communications error:', error);
+      res.status(500).json({ error: "Failed to fetch communications" });
+    }
+  });
 
   // Register AppSheet integration routes
   registerAppSheetRoutes(app);
