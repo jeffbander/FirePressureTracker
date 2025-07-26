@@ -123,6 +123,10 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- July 26, 2025: **COMPREHENSIVE APPSHEET API DOCUMENTATION COMPLETE** - Created detailed bidirectional API flow documentation
+- July 26, 2025: Fixed duplicate blood pressure readings issue - implemented deduplication logic in patient detail views
+- July 26, 2025: Enhanced communication API integration - replaced prompt/alert system with real database operations
+- July 26, 2025: Completed mobile responsiveness with working hamburger menu and proper navigation
 - July 26, 2025: Fixed workflow JSON parsing error - added missing `/api/workflow` endpoint that was causing "Unexpected token '<'" errors
 - July 26, 2025: Fixed patient ID validation to prevent "NaN" errors when invalid IDs are passed
 - July 26, 2025: Fixed patient display to show correct total count (553) instead of only current page count (20)
