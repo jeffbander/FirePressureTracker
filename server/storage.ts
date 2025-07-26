@@ -56,6 +56,7 @@ export interface IStorage {
   
   // Lookup table operations
   getRoleByName(name: string): Promise<{ id: number; name: string } | undefined>;
+  getUnion(id: number): Promise<{ id: number; name: string } | undefined>;
   getUnionByName(name: string): Promise<{ id: number; name: string } | undefined>;
   getGenderByName(name: string): Promise<{ id: number; name: string } | undefined>;
   getMemberStatusByName(name: string): Promise<{ id: number; name: string } | undefined>;
@@ -70,6 +71,11 @@ export class DatabaseStorage implements IStorage {
   async getRoleByName(name: string) {
     const [role] = await db.select().from(roles).where(eq(roles.name, name));
     return role;
+  }
+
+  async getUnion(id: number) {
+    const [union] = await db.select().from(unions).where(eq(unions.id, id));
+    return union;
   }
 
   async getUnionByName(name: string) {

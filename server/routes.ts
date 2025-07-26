@@ -28,11 +28,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all members (patients)
+  // Get all members (patients) with pagination and latest readings
   app.get("/api/patients", async (req, res) => {
     try {
-      const members = await storage.getAllMembers();
-      res.json(members);
+      // Pagination parameters
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = (page - 1) * limit;
+      
+      // Get total count for pagination
+      const allMembers = await storage.getAllMembers();
+      const totalCount = allMembers.length;
+      
+      // Get paginated members
+      const paginatedMembers = allMembers.slice(offset, offset + limit);
+      
+      // Add latest reading and union name to each member
+      const membersWithReadings = await Promise.all(
+        paginatedMembers.map(async (member) => {
+          const readings = await storage.getBpReadingsByMember(member.id);
+          const latestReading = readings[0]; // readings are ordered by recorded_at DESC
+          
+          // Get union name
+          const union = member.unionId ? await storage.getUnion(member.unionId) : null;
+          
+          return {
+            ...member,
+            union: union?.name || 'N/A',
+            latestReading,
+            readingCount: readings.length
+          };
+        })
+      );
+      
+      res.json({
+        data: membersWithReadings,
+        pagination: {
+          page,
+          limit,
+          totalCount,
+          totalPages: Math.ceil(totalCount / limit),
+          hasNext: page * limit < totalCount,
+          hasPrev: page > 1
+        }
+      });
     } catch (error) {
       console.error('Get patients error:', error);
       res.status(500).json({ message: "Failed to fetch patients" });

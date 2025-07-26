@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Header } from "@/components/header";
@@ -24,12 +24,24 @@ export default function Patients() {
   const [viewMode, setViewMode] = useState('cards');
   const [showAddDialog, setShowAddDialog] = useState(false);
 
-  const { data: patientsResponse, isLoading } = useQuery({
-    queryKey: ['/api/patients', { search, status: statusFilter, union: unionFilter }],
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, unionFilter, ageGroupFilter, employmentStatusFilter, genderFilter, activityFilter]);
+  
+  const { data: patientsData, isLoading } = useQuery({
+    queryKey: ['/api/patients', currentPage],
+    queryFn: async () => {
+      const response = await fetch(`/api/patients?page=${currentPage}&limit=20`);
+      return response.json();
+    },
   });
 
-  // Extract patients array from response
-  const patients = Array.isArray(patientsResponse) ? patientsResponse : [];
+  // Extract patients array and pagination from response
+  const patients = patientsData?.data || [];
+  const pagination = patientsData?.pagination || {};
 
   // Filter patients based on all criteria
   const filteredPatients = patients.filter((patient: any) => {
@@ -117,7 +129,23 @@ export default function Patients() {
     // Hypertension status filter
     if (statusFilter !== 'all') {
       const latestReading = patient.latestReading;
-      if (!latestReading || latestReading.category !== statusFilter) {
+      if (!latestReading) {
+        // No reading, so can't match any status filter
+        return false;
+      }
+      
+      // Map BP categories to filter values
+      const categoryMapping: Record<string, string[]> = {
+        'normal': ['normal'],
+        'elevated': ['elevated'],
+        'stage1': ['stage1_hypertension'],
+        'stage2': ['stage2_hypertension'],
+        'hypertensive_crisis': ['hypertensive_crisis'],
+        'low': ['low']
+      };
+      
+      const acceptableCategories = categoryMapping[statusFilter] || [];
+      if (!acceptableCategories.includes(latestReading.category)) {
         return false;
       }
     }
@@ -718,7 +746,7 @@ export default function Patients() {
                                 {patient.fullName || `${patient.firstName || ''} ${patient.lastName || ''}`.trim()}
                               </h3>
                               <p className="text-sm text-gray-600">
-                                Union {patient.unionId || 'N/A'} • ID: {patient.unionMemberId || patient.employeeId || 'N/A'} • Age: {patient.age || 'N/A'}
+                                Union {patient.union || 'N/A'} • ID: {patient.unionMemberId || patient.employeeId || 'N/A'} • Age: {patient.age || 'N/A'}
                                 {patient.dateOfBirth && (
                                   <span> • DOB: {new Date(patient.dateOfBirth).toLocaleDateString()}</span>
                                 )}
@@ -745,11 +773,27 @@ export default function Patients() {
                         </div>
                       </CardHeader>
                       <CardContent className="pb-4">
-                        <IndividualBPChart
-                          patientName={patient.fullName || `${patient.firstName || ''} ${patient.lastName || ''}`.trim()}
-                          readings={patient.readings || []}
-                          height="h-48"
-                        />
+                        {patient.readingCount > 0 ? (
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <div className="text-sm text-gray-600 mb-2">
+                              BP History ({patient.readingCount} reading{patient.readingCount !== 1 ? 's' : ''})
+                            </div>
+                            <div className="space-y-2">
+                              {patient.latestReading && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm">Latest Reading:</span>
+                                  <span className="font-mono font-semibold text-lg">
+                                    {patient.latestReading.systolic}/{patient.latestReading.diastolic}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bg-gray-50 rounded-lg p-4 text-center text-gray-500">
+                            No blood pressure readings recorded
+                          </div>
+                        )}
                         <div className="mt-4 flex items-center justify-between">
                           <div className="text-sm text-gray-600">
                             {patient.latestReading ? (
@@ -777,6 +821,60 @@ export default function Patients() {
                       </CardContent>
                     </Card>
                   ))}
+                </div>
+              )}
+              
+              {/* Pagination Controls */}
+              {pagination.totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6">
+                  <div className="text-sm text-gray-600">
+                    Showing {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.totalCount)} of {pagination.totalCount} patients
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={!pagination.hasPrev}
+                    >
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                        const pageNum = i + 1;
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={pageNum === pagination.page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(pageNum)}
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                      {pagination.totalPages > 5 && (
+                        <>
+                          <span className="px-2">...</span>
+                          <Button
+                            variant={pagination.page === pagination.totalPages ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(pagination.totalPages)}
+                          >
+                            {pagination.totalPages}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
+                      disabled={!pagination.hasNext}
+                    >
+                      Next
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
