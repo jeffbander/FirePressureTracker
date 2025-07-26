@@ -241,10 +241,31 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(bpReadings.recordedAt));
   }
 
-  async getRecentReadings(limit: number = 10): Promise<BpReading[]> {
-    return await db.select().from(bpReadings)
-      .orderBy(desc(bpReadings.recordedAt))
-      .limit(limit);
+  async getRecentReadings(limit: number = 10): Promise<any[]> {
+    return await db.select({
+      id: bpReadings.id,
+      memberId: bpReadings.memberId,
+      systolic: bpReadings.systolic,
+      diastolic: bpReadings.diastolic,
+      heartRate: bpReadings.heartRate,
+      categoryId: bpReadings.categoryId,
+      notes: bpReadings.notes,
+      recordedBy: bpReadings.recordedBy,
+      recordedAt: bpReadings.recordedAt,
+      deviceId: bpReadings.deviceId,
+      syncedFromDevice: bpReadings.syncedFromDevice,
+      isAbnormal: bpReadings.isAbnormal,
+      createdAt: bpReadings.createdAt,
+      member: {
+        id: members.id,
+        fullName: members.fullName,
+        unionId: members.unionId
+      }
+    })
+    .from(bpReadings)
+    .leftJoin(members, eq(bpReadings.memberId, members.id))
+    .orderBy(desc(bpReadings.recordedAt))
+    .limit(limit);
   }
 
   async createBpReading(insertReading: InsertBpReading): Promise<BpReading> {

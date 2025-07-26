@@ -122,7 +122,7 @@ export default function Dashboard() {
                         {activity.isAbnormal ? 'Abnormal reading recorded' : 'Normal reading recorded'}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {activity.patient?.firstName} {activity.patient?.lastName} - {activity.systolic}/{activity.diastolic} mmHg
+                        {activity.member?.fullName || 'Unknown Patient'} - {activity.systolic}/{activity.diastolic} mmHg
                       </p>
                       <p className="text-xs text-gray-400">
                         {new Date(activity.recordedAt).toLocaleString()}
