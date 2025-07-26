@@ -706,17 +706,17 @@ export default function Patients() {
             <TabsTrigger value="call-center">Call Center</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="cards" className="mt-6">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Patient Records</h2>
-                <span className="text-sm text-gray-600">
-                  Showing {Math.min(patients.length, 20)} of {pagination.totalCount || 0} total patients (Page {pagination.page || 1} of {pagination.totalPages || 1})
-                </span>
-              </div>
-              
+          <TabsContent value="cards" className="mt-6 flex flex-col h-[calc(100vh-350px)]">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Patient Records</h2>
+              <span className="text-sm text-gray-600">
+                Showing {Math.min(patients.length, 20)} of {pagination.totalCount || 0} total patients (Page {pagination.page || 1} of {pagination.totalPages || 1})
+              </span>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto">
               {isLoading ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-2">
                   {[...Array(4)].map((_, i) => (
                     <Card key={i} className="animate-pulse">
                       <CardContent className="p-6">
@@ -726,7 +726,7 @@ export default function Patients() {
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-2">
                   {filteredPatients.map((patient: any) => (
                     <Card key={patient.id} className="hover:shadow-lg transition-shadow">
                       <CardHeader className="pb-4">
@@ -828,10 +828,11 @@ export default function Patients() {
                   ))}
                 </div>
               )}
-              
-              {/* Pagination Controls */}
-              {pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between mt-6">
+            </div>
+            
+            {/* Pagination Controls */}
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
                   <div className="text-sm text-gray-600">
                     Showing {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.totalCount)} of {pagination.totalCount} patients
                   </div>
@@ -880,9 +881,8 @@ export default function Patients() {
                       Next
                     </Button>
                   </div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="table" className="mt-6">
