@@ -240,7 +240,7 @@ export default function Approvals() {
   const isLoading = selectedStatus === "pending" ? isPendingLoading : isStatusLoading;
 
   return (
-    <div className="space-y-6 ml-64 p-6">
+    <div className="space-y-6 ml-0 md:ml-64 pt-16 md:pt-0 p-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Patient Approvals</h1>
         <p className="text-muted-foreground mt-2">

@@ -25,7 +25,7 @@ export default function BPTrends() {
 
   if (isLoading || readingsLoading) {
     return (
-      <div className="flex-1 ml-64">
+      <div className="flex-1 ml-0 md:ml-64 pt-16 md:pt-0">
         <Header 
           title="BP Trends & Intervention Analytics" 
           subtitle="Loading intervention analytics..." 
@@ -149,7 +149,7 @@ export default function BPTrends() {
   const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4'];
 
   return (
-    <div className="flex-1 ml-64">
+    <div className="flex-1 ml-0 md:ml-64 pt-16 md:pt-0">
       <Header 
         title="BP Trends & Intervention Analytics" 
         subtitle="Compare blood pressure trends across patient groups to evaluate intervention effectiveness" 

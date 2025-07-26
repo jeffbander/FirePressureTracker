@@ -138,7 +138,7 @@ export default function Communications() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 ml-64 p-8">
+      <div className="flex-1 ml-0 md:ml-64 pt-16 md:pt-8 p-8">
         <Header 
           title="Communication Logs" 
           subtitle="Loading communication records..."
@@ -149,7 +149,7 @@ export default function Communications() {
   }
 
   return (
-    <div className="flex-1 ml-64 p-8">
+    <div className="flex-1 ml-0 md:ml-64 pt-16 md:pt-8 p-8">
       <Header 
         title="Communication Logs" 
         subtitle="Interactive analysis of all patient communications and call records"

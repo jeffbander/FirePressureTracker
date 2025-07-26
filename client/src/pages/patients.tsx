@@ -489,7 +489,7 @@ export default function Patients() {
   };
 
   return (
-    <div className="flex-1 ml-64">
+    <div className="flex-1 ml-0 md:ml-64 pt-16 md:pt-0">
       <Header 
         title="Patient Management" 
         subtitle="View and manage patient records with advanced filtering"

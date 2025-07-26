@@ -73,7 +73,7 @@ export default function PatientDetail() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 ml-64">
+      <div className="flex-1 ml-0 md:ml-64 pt-16 md:pt-0">
         <div className="p-8">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-gray-200 rounded w-1/3"></div>
@@ -90,7 +90,7 @@ export default function PatientDetail() {
 
   if (!patient) {
     return (
-      <div className="flex-1 ml-64">
+      <div className="flex-1 ml-0 md:ml-64 pt-16 md:pt-0">
         <div className="p-8">
           <Card>
             <CardContent className="pt-6 text-center">
@@ -143,7 +143,7 @@ export default function PatientDetail() {
   const medications = patient.medications ? JSON.parse(patient.medications) : [];
 
   return (
-    <div className="flex-1 ml-64">
+    <div className="flex-1 ml-0 md:ml-64 pt-16 md:pt-0">
       <Header 
         title="Patient Details" 
         subtitle="Detailed patient information and history"
