@@ -657,7 +657,7 @@ export default function Patients() {
           <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setUnionFilter('all')}>
             <CardContent className="p-4 text-center">
               <Building className="h-6 w-6 mx-auto mb-2 text-blue-600" />
-              <div className="text-2xl font-bold text-blue-600">{filteredPatients.length}</div>
+              <div className="text-2xl font-bold text-blue-600">{pagination.totalCount || 0}</div>
               <div className="text-sm text-gray-600">Total Patients</div>
             </CardContent>
           </Card>
@@ -711,7 +711,7 @@ export default function Patients() {
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold">Patient Records</h2>
                 <span className="text-sm text-gray-600">
-                  Showing {filteredPatients.length} of {patients.length} patients
+                  Showing {Math.min(patients.length, 20)} of {pagination.totalCount || 0} total patients (Page {pagination.page || 1} of {pagination.totalPages || 1})
                 </span>
               </div>
               
