@@ -709,7 +709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         statusId: outcome === 'completed' ? 3 : outcome === 'voicemail' ? 2 : 1, // pending, in_progress, completed
         subject: `${type} communication`,
         content,
-        assignedTo: staffId ? parseInt(staffId) : null
+        assignedTo: null // Remove staffId assignment until we have proper user management
       });
 
       res.json({ success: true, communication });

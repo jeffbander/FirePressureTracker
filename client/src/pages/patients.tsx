@@ -38,19 +38,29 @@ export default function Patients() {
   // Communication mutation
   const logCommunicationMutation = useMutation({
     mutationFn: async (communicationData: any) => {
+      console.log('Mutation function called with:', communicationData);
       const response = await fetch('/api/communications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(communicationData)
       });
-      if (!response.ok) throw new Error('Failed to log communication');
-      return response.json();
+      console.log('Response status:', response.status);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Response error:', errorText);
+        throw new Error('Failed to log communication');
+      }
+      const result = await response.json();
+      console.log('Response result:', result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Mutation success:', data);
       toast({ title: "Communication logged successfully" });
       queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
     },
     onError: (error) => {
+      console.error('Mutation error:', error);
       toast({ 
         title: "Error logging communication", 
         description: error.message,
@@ -61,6 +71,8 @@ export default function Patients() {
 
   // Call function with proper dialog
   const handleCall = (patient: any) => {
+    console.log('handleCall called with patient:', patient);
+    
     const outcomes = [
       { value: 'completed', label: 'Answered - Completed' },
       { value: 'voicemail', label: 'Left Voicemail' },
@@ -73,18 +85,28 @@ export default function Patients() {
       outcomes.map((o, i) => `${i + 1}. ${o.label}`).join('\n') +
       '\n\nEnter number (1-4):'
     );
+    
+    console.log('User selected outcome:', outcomeChoice);
 
     const outcomeIndex = parseInt(outcomeChoice || '0') - 1;
+    console.log('Outcome index:', outcomeIndex);
+    
     if (outcomeIndex >= 0 && outcomeIndex < outcomes.length) {
       const selectedOutcome = outcomes[outcomeIndex];
       const notes = prompt('Call notes (optional):') || '';
+      
+      console.log('About to mutate communication:', {
+        memberId: patient.id,
+        type: 'call',
+        content: `Call outcome: ${selectedOutcome.label}${notes ? `. Notes: ${notes}` : ''}`,
+        outcome: selectedOutcome.value
+      });
       
       logCommunicationMutation.mutate({
         memberId: patient.id,
         type: 'call',
         content: `Call outcome: ${selectedOutcome.label}${notes ? `. Notes: ${notes}` : ''}`,
-        outcome: selectedOutcome.value,
-        staffId: 1 // Default staff ID
+        outcome: selectedOutcome.value
       });
 
       if (selectedOutcome.value === 'completed') {
@@ -98,8 +120,7 @@ export default function Patients() {
               memberId: patient.id,
               type: 'follow_up',
               content: `Follow-up scheduled for ${date}: ${reason}`,
-              outcome: 'scheduled',
-              staffId: 1
+              outcome: 'scheduled'
             });
           }
         }
