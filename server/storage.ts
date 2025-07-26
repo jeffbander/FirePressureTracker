@@ -230,9 +230,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBpReadingsByMember(memberId: number): Promise<BpReading[]> {
-    return await db.select().from(bpReadings)
+    const allReadings = await db.select().from(bpReadings)
       .where(eq(bpReadings.memberId, memberId))
       .orderBy(desc(bpReadings.recordedAt));
+    
+    // Remove duplicates based on systolic, diastolic, and recordedAt timestamp
+    const uniqueReadings = allReadings.filter((reading, index, arr) => {
+      return index === arr.findIndex(r => 
+        r.systolic === reading.systolic && 
+        r.diastolic === reading.diastolic && 
+        new Date(r.recordedAt).getTime() === new Date(reading.recordedAt).getTime()
+      );
+    });
+    
+    return uniqueReadings;
   }
 
   async getAbnormalReadings(): Promise<BpReading[]> {
