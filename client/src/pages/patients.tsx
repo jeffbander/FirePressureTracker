@@ -746,15 +746,20 @@ export default function Patients() {
                                 {patient.fullName || `${patient.firstName || ''} ${patient.lastName || ''}`.trim()}
                               </h3>
                               <p className="text-sm text-gray-600">
-                                Union {patient.union || 'N/A'} • ID: {patient.unionMemberId || patient.employeeId || 'N/A'} • Age: {patient.age || 'N/A'}
+                                {patient.union || 'N/A'} • ID: {patient.unionMemberId || patient.employeeId || 'N/A'} • Age: {patient.age || 'N/A'}
                                 {patient.dateOfBirth && (
                                   <span> • DOB: {new Date(patient.dateOfBirth).toLocaleDateString()}</span>
                                 )}
                               </p>
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant="outline" className="text-xs">
-                                  {patient.department}
+                                  {patient.union || 'N/A'}
                                 </Badge>
+                                {patient.department && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {patient.department}
+                                  </Badge>
+                                )}
                                 {patient.isRetired && (
                                   <Badge variant="secondary" className="text-xs">
                                     Retired
