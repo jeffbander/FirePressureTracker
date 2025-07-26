@@ -87,10 +87,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const priorityPatients = await Promise.all(
         memberIds.map(async (memberId) => {
           const member = await storage.getMember(memberId);
+          if (!member) return null;
+          
           const readings = await storage.getBpReadingsByMember(memberId);
           const latestReading = readings[0];
+          const union = await storage.getUnion(member.unionId);
           return {
             ...member,
+            union: union?.name || 'N/A',
             latestReading,
           };
         })
