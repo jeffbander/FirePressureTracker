@@ -88,14 +88,16 @@ export default function Communications() {
     }
   });
 
-  const { data: patients = [] } = useQuery({
+  const { data: patientsResponse } = useQuery({
     queryKey: ['/api/patients'],
     queryFn: async () => {
-      const response = await fetch('/api/patients');
+      const response = await fetch('/api/patients?limit=1000');
       if (!response.ok) throw new Error('Failed to fetch patients');
       return response.json();
     }
   });
+  
+  const patients = patientsResponse?.data || [];
 
   // Helper functions
   const getTypeIcon = (type: string) => {
@@ -389,7 +391,7 @@ export default function Communications() {
                       <SelectItem value="all">All Patients</SelectItem>
                       {patients.map((patient: any) => (
                         <SelectItem key={patient.id} value={patient.id.toString()}>
-                          {patient.firstName} {patient.lastName} ({patient.employeeId})
+                          {patient.fullName || `${patient.firstName || ''} ${patient.lastName || ''}`.trim()} ({patient.unionMemberId || patient.employeeId || 'N/A'})
                         </SelectItem>
                       ))}
                     </SelectContent>
