@@ -78,20 +78,20 @@ export function PriorityPatients() {
         </div>
       </div>
       <div className="divide-y divide-gray-100">
-        {patients?.map((patient: any) => (
+        {Array.isArray(patients) && patients.map((patient: any) => (
           <div key={patient.id} className="p-6 hover:bg-gray-50 transition-colors cursor-pointer">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                   <span className="text-white font-medium text-sm">
-                    {patient.firstName?.[0]}{patient.lastName?.[0]}
+                    {patient.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || 'UN'}
                   </span>
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-900">
-                    {patient.firstName} {patient.lastName}
+                    {patient.fullName || 'Unknown Patient'}
                   </h4>
-                  <p className="text-sm text-gray-500">{patient.department}</p>
+                  <p className="text-sm text-gray-500">{patient.union || 'No Union'}</p>
                   <p className="text-sm text-gray-500">
                     Last reading: {patient.latestReading?.systolic}/{patient.latestReading?.diastolic} mmHg
                   </p>
