@@ -123,6 +123,10 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- July 26, 2025: Fixed workflow JSON parsing error - added missing `/api/workflow` endpoint that was causing "Unexpected token '<'" errors
+- July 26, 2025: Fixed patient ID validation to prevent "NaN" errors when invalid IDs are passed
+- July 26, 2025: Fixed patient display to show correct total count (553) instead of only current page count (20)
+- July 26, 2025: Removed redundant "Union" prefix from patient cards and added union badges for clearer display
 - July 25, 2025: **COMPLETE APPSHEET DATA MIGRATION SUCCESS** - Imported full production dataset: 553 members and 7,470 BP readings
 - July 25, 2025: Achieved comprehensive data coverage across all unions: UFOA (267 members, 3,360 readings), UFA (242 members, 3,368 readings), LBA (33 members, 756 readings), Mount Sinai (11 members, 19 readings)
 - July 25, 2025: Successfully analyzed AppSheet app structure including Users table, app_data (BP readings), and call_records tables

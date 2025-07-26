@@ -165,6 +165,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/patients/:id", async (req, res) => {
     try {
       const memberId = parseInt(req.params.id);
+      if (isNaN(memberId)) {
+        return res.status(400).json({ message: "Invalid patient ID" });
+      }
       const member = await storage.getMember(memberId);
       
       if (!member) {
@@ -351,6 +354,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Member search error:', error);
       res.status(500).json({ message: "Failed to search members" });
+    }
+  });
+
+  // Get workflow status/info
+  app.get("/api/workflow", async (req, res) => {
+    try {
+      // Return workflow tasks (frontend expects array directly)
+      const tasks = await storage.getAllWorkflowTasks();
+      res.json(tasks);
+    } catch (error) {
+      console.error('Get workflow error:', error);
+      res.status(500).json({ message: "Failed to fetch workflow status" });
     }
   });
 
