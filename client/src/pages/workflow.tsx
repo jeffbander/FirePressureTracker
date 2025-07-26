@@ -42,11 +42,11 @@ export default function Workflow() {
   }
 
   const taskList = Array.isArray(tasks) ? tasks : [];
-  const patientList = Array.isArray(patients) ? patients : [];
+  const patientList = patients?.data ? patients.data : [];
 
   const getPatientName = (patientId: number) => {
     const patient = patientList.find((p: any) => p.id === patientId);
-    return patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient';
+    return patient ? patient.fullName : 'Unknown Patient';
   };
 
   const getPriorityColor = (priority: string) => {

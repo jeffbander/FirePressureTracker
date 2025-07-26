@@ -364,9 +364,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get workflow status/info
   app.get("/api/workflow", async (req, res) => {
     try {
-      // Return workflow tasks (frontend expects array directly)
+      // Return workflow tasks with priority and status names
       const tasks = await storage.getAllWorkflowTasks();
-      res.json(tasks);
+      
+      // Map tasks to include priority and status names
+      const tasksWithDetails = await Promise.all(
+        tasks.map(async (task) => {
+          const priority = task.priorityId === 4 ? 'urgent' : 
+                          task.priorityId === 3 ? 'high' : 
+                          task.priorityId === 2 ? 'medium' : 'low';
+          
+          const status = task.statusId === 1 ? 'pending' :
+                        task.statusId === 2 ? 'in_progress' :
+                        task.statusId === 3 ? 'completed' : 'pending';
+          
+          return {
+            ...task,
+            priority,
+            status,
+            patientId: task.memberId, // Map memberId to patientId for frontend compatibility
+          };
+        })
+      );
+      
+      res.json(tasksWithDetails);
     } catch (error) {
       console.error('Get workflow error:', error);
       res.status(500).json({ message: "Failed to fetch workflow status" });
